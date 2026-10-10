@@ -1,14 +1,16 @@
 import { z } from 'zod';
 import * as c from './contracts';
 export class ApiClientError extends Error {
-  constructor(public status: number, public code: c.ErrorCode, message: string) { super(message); }
+  constructor(public status: number, public code: c.ErrorCode, message: string, public options?: { retryAfterSeconds?: number; rateLimitSource?: 'app' | 'provider' }) { super(message); }
 }
 async function checkedResponse(path: string, init?: RequestInit) {
   const response = await fetch(path, { ...init, credentials: 'same-origin', cache: 'no-store' });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     const error = c.errorEnvelopeSchema.safeParse(body);
-    throw new ApiClientError(response.status, error.success ? error.data.error.code : 'INTERNAL_ERROR', error.success ? error.data.error.message : 'The service returned an unexpected response.');
+    const retryAfter = response.headers.get('Retry-After');
+    const retryAfterSeconds = retryAfter !== null && /^\d+$/.test(retryAfter) && Number.isSafeInteger(Number(retryAfter)) ? Number(retryAfter) : undefined;
+    throw new ApiClientError(response.status, error.success ? error.data.error.code : 'INTERNAL_ERROR', error.success ? error.data.error.message : 'The service returned an unexpected response.', { retryAfterSeconds, rateLimitSource: response.headers.get('X-AI-Rate-Limit-Source') === 'app' ? 'app' : response.headers.get('X-AI-Rate-Limit-Source') === 'provider' ? 'provider' : undefined });
   }
   return response;
 }
