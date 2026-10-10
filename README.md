@@ -32,6 +32,27 @@ With blank Supabase configuration, the shell boots and displays the exact missin
 
 Set `GEMINI_API_KEY` and `GEMINI_MODEL` locally for server-side photo-assisted drafting and typed natural-language search. The environment template leaves both blank. A minimal server-side text-generation request has been verified against the saved local configuration; Agent 3 implements the draft and search endpoints; the student feed now connects natural-language search to the grounded endpoint. Verify the selected model and account capabilities in each environment rather than assuming IDs. Manual posting and standard filters remain usable without Gemini.
 
+## Shared AI admission and interpretation cache
+
+Apply Agent 1's AI reliability migration before enabling AI routes. Both endpoints share atomic admission under the authenticated Supabase session. Limits live in the administrator-owned `public.ai_runtime_config` singleton; clients cannot set budgets. No extra credentials or dependencies are needed. Defaults are 6 requests/minute and 100/day per user, 12/minute and 450/day per project, one concurrent request/user and two/project. These are application budgets, not guaranteed provider quotas; tune them below the selected model's actual project quota.
+
+An administrator can inspect/change settings through the database dashboard or an owner connection:
+
+```sql
+SELECT * FROM public.ai_runtime_config WHERE singleton = true;
+UPDATE public.ai_runtime_config
+SET user_per_minute = 6, user_per_day = 100,
+    project_per_minute = 12, project_per_day = 450,
+    user_concurrency = 1, project_concurrency = 2,
+    lease_seconds = 60, provider_cooldown_seconds = 3600,
+    cache_ttl_seconds = 300, cache_max_entries = 1000
+WHERE singleton = true;
+```
+
+Lease expiration recovers capacity after interrupted requests. Provider throttling starts a shared cooldown (one hour by default) rather than triggering automatic retries. AI rate-limit errors preserve `{error:{code,message}}` and include integer `Retry-After` seconds plus `X-AI-Rate-Limit-Source: app` or `provider`; the shared client exposes these as `ApiClientError.options`. AI admission fails closed when shared storage is unavailable. Manual posting and standard filters remain available.
+
+Search caches validated filter interpretations for five minutes, with a maximum of 1,000 entries by default. It retrieves inventory under the current authenticated session on every request and builds summaries from those fresh rows. Cache identity accounts for query/context, model, policy and verified landmarks; relative-time queries need an explicit time-aware policy or bypass caching. Cache storage contains no listing responses, photo URLs, reservations or pickup codes. Do not clear provider cooldown just to retry an exhausted quota; restore access only after checking the provider quota/reset.
+
 ## Maps
 
 Leaflet 1.9 + React Leaflet 5 selected for provider-independent raster tiles. Agent 2 imports `leaflet/dist/leaflet.css` and loads map components client-side with SSR disabled. Both `NEXT_PUBLIC_MAP_TILE_URL` (`{z}/{x}/{y}` template) and `NEXT_PUBLIC_MAP_ATTRIBUTION` are needed before enabling tiles. No default provider or fabricated campus coordinates. Choose an authorized provider, verify its plan/domain restrictions, attribution and browser caching requirements; keys in public tile URLs are public and should be domain-restricted. Keep list view usable when tiles are unavailable.
@@ -52,7 +73,7 @@ Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/t
 
 Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
 
-Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Hosted organizer/photo/search lifecycle and separate-session student search-to-pickup checks passed after switching to `gemini-3.5-flash-lite`; see [the verification report](docs/search-integration.md). AI drafts require manual entry of location, quantity, pickup instructions and deadline. Pending: real map provider verification, mobile/geolocation-denial checks, search caching and a shared AI rate limiter.
+Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Hosted organizer/photo/search lifecycle and separate-session student search-to-pickup checks passed after switching to `gemini-3.5-flash-lite`; see [the verification report](docs/search-integration.md). AI drafts require manual entry of location, quantity, pickup instructions and deadline. Pending: real map provider verification, mobile/geolocation-denial checks, live verification of shared AI admission and interpretation caching.
 
 ## Dependency audit
 
