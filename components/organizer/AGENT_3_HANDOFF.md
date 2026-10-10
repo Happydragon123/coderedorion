@@ -1,5 +1,11 @@
 # Agent 3 handoff — organizer and Gemini
 
+## Agent 0 integration
+
+Commit `b72bf6b` was reviewed and fast-forwarded into `main`. Global Share food / Manage links and home/account links are connected. Shared `npm test` now discovers `lib/ai/*.test.ts` alongside existing suites. No dependency, contract, migration or environment changes were needed. The validation and remaining-limit notes below describe Agent 3’s original handoff; hosted verification and student search UI wiring remain separate follow-up work.
+
+Integration validation: `npm run check` passed (lint, typecheck, 11 tests including four AI policy tests, production build); two opt-in live suites skipped. Agent 0 did not repeat Gemini calls or live data mutations during this integration.
+
 Branch: `agent-3-organizer-ai`. All implementation is confined to Agent 3 ownership; no contract, migration, dependency, shared navigation, API client, or global stylesheet changes. Build-generated changes to `next-env.d.ts` were restored.
 
 ## Implemented

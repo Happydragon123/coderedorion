@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test scripts/*.test.ts components/map/*.test.ts",
+    "test": "node --import tsx --test scripts/*.test.ts components/map/*.test.ts lib/ai/*.test.ts",
     "check": "npm run lint && npm run typecheck && npm test && npm run build"
   },
   "dependencies": {
