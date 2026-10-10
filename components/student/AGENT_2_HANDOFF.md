@@ -1,6 +1,6 @@
 # Agent 2 student interface handoff
 
-Branch: `agent-2-student-interface`. Changes are restricted to `app/(student)`, `components/student`, `components/map`, and `lib/geo.ts`. No dependencies, contracts, migrations, shared navigation/styles, or environment files were changed. The group layout calls `requirePageUser`; APIs continue to authorize every request independently.
+Original branch: `agent-2-student-interface`. Search follow-up branch: `agent-2-natural-language-search`. Changes are restricted to `app/(student)`, `components/student`, `components/map`, and `lib/geo.ts`. No dependencies, contracts, migrations, shared navigation/styles, or environment files were changed. The group layout calls `requirePageUser`; APIs continue to authorize every request independently.
 
 ## Delivered
 
@@ -14,7 +14,7 @@ Branch: `agent-2-student-interface`. Changes are restricted to `app/(student)`, 
 
 Use existing Supabase configuration, applied migration and confirmed test accounts. Populate landmarks only after independent coordinate verification. Map tiles require both `NEXT_PUBLIC_MAP_TILE_URL` and `NEXT_PUBLIC_MAP_ATTRIBUTION` at build time and an authorized provider. No default tile service or fabricated locations are used. The shared header is unchanged; Agent 0 can add `/listings` to shared navigation. Student navigation links all four flows from within the route group.
 
-`app/api/ai/search` does not exist in this checkout, so no AI search control was enabled. Agent 3 must deliver that endpoint before integration; deterministic filters work independently. The deployment has not been updated by this branch.
+Agent 3's `/api/ai/search` is now implemented and its flow-verification report was read before integration. The student feed calls the shared `api.search` adapter. The deployment has not been updated by this branch.
 
 ## Validation
 
@@ -23,3 +23,11 @@ Use existing Supabase configuration, applied migration and confirmed test accoun
 ## Remaining verification
 
 Active reservation/cancellation and 409 UI behavior still require an open test listing; none is available in the signed-in feed. Mobile layout, map provider rendering/tile failure, geolocation denial and deployed browser workflows remain unverified. Map configuration is absent locally, and the disabled-map/list fallback was verified. Database ownership/lifecycle checks remain backend-owned. Client clocks update every ten seconds; database time remains authoritative for mutations. A device-timezone deadline input is converted to ISO UTC; displayed pickup deadlines use America/Chicago. Codes never appear in public cards or map popups. Private photo URLs expire after five minutes; reload details to renew them.
+
+## Natural-language search follow-up
+
+The feed now accepts a trimmed request of 1–1,000 characters and supplies the selected pickup landmark and optional distance origin. Search results use only the endpoint's returned listing DTOs for cards/map pins; the endpoint's deterministic grounded summary and interpreted filters are displayed as text. Dietary, radius and deadline controls remain independently available through Apply filters. Applying filters exits search; Back to standard results restores the previously applied filters without erasing form selections.
+
+Loading, empty, contract/provider/network errors and retry are visible. Errors leave standard filtering available, including when Gemini is unconfigured, rate-limited or unavailable. Changing requests or leaving search discards obsolete responses. The student resource hook reuses one request across React development effect replay to avoid duplicate AI provider calls; explicit refresh/retry still fetches again. No fixtures, AI-generated inventory, automatic reservations, shared contracts or endpoint changes were introduced.
+
+Validation: lint, typecheck, npm test (11 passed, two opt-in live suites skipped) and production build passed. This follow-up did not rerun live Gemini/browser search or mutate demo inventory. Agent 3's verified server flow is recorded in `components/organizer/FLOW_VERIFICATION.md`; integration should rehearse the new browser search input with available demo inventory and provider error cases. Gemini settings and host function timeout remain Agent 3's documented setup requirements.

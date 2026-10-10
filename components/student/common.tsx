@@ -1,6 +1,6 @@
  'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ApiClientError } from '@/lib/api-client';
 import type { Listing } from '@/lib/contracts';
 import { directionsUrl, formatDistance } from '@/lib/geo';
@@ -18,9 +18,15 @@ export function Failure({ message, retry }: { message: string; retry?: () => voi
 export function useResource<T>(loader: () => Promise<T>) {
   const [state, setState] = useState<{ data?: T; error?: string; loading: boolean }>({ loading: true });
   const [version, setVersion] = useState(0);
+  const pending = useRef<{ loader: () => Promise<T>; version: number; promise: Promise<T> } | undefined>(undefined);
   useEffect(() => {
     let current = true;
-    loader().then(data => { if (current) setState({ data, loading: false }); }).catch(error => { if (current) setState({ error: errorMessage(error), loading: false }); });
+    // Reuse the same request during React's development effect replay. AI endpoints
+    // allow only one in-flight request per user; refresh still starts a new request.
+    if (!pending.current || pending.current.loader !== loader || pending.current.version !== version) {
+      pending.current = { loader, version, promise: Promise.resolve().then(loader) };
+    }
+    pending.current.promise.then(data => { if (current) setState({ data, loading: false }); }).catch(error => { if (current) setState({ error: errorMessage(error), loading: false }); });
     return () => { current = false; };
   }, [loader, version]);
   return { ...state, refresh: () => { setState({ loading: true }); setVersion(v => v + 1); } };
