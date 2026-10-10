@@ -3,7 +3,10 @@ import { z } from 'zod';
 import { ApiError } from '@/lib/server/api';
 export async function generate<T>(instructions: string, prompt: string, schema: z.ZodType<T>, photo?: Buffer): Promise<T> {
   const key = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL;
-  if (!key || !model) throw new ApiError(503, 'CONFIGURATION_MISSING', 'Photo assistance and natural-language search require GEMINI_API_KEY and GEMINI_MODEL. Manual posting and standard filters remain available.');
+  if (!key || !model) {
+    const missing = [!key && 'GEMINI_API_KEY', !model && 'GEMINI_MODEL'].filter(Boolean);
+    throw new ApiError(503, 'CONFIGURATION_MISSING', `Missing server configuration: ${missing.join(', ')}. Manual posting and standard filters remain available.`);
+  }
   if (!/^[a-zA-Z0-9._-]+$/.test(model)) throw new ApiError(503, 'CONFIGURATION_MISSING', 'GEMINI_MODEL must contain a configured model identifier.');
   const parts: object[] = [{ text: prompt }];
   if (photo) parts.push({ inlineData: { mimeType: 'image/webp', data: photo.toString('base64') } });
