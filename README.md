@@ -30,7 +30,7 @@ Required for sign-in: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLI
 
 With blank Supabase configuration, the shell boots and displays the exact missing variable names; sign-in is disabled and private routes redirect to sign-in. There is no mock authentication or service-role bypass. Browser/server use the public key with user session cookies. Proxy refreshes cookies; protected pages and APIs must independently verify the user. Apply the reviewed migration and run its real database tests as described in [database setup](docs/database.md). Never expose a service-role key.
 
-Set `GEMINI_API_KEY` and `GEMINI_MODEL` locally for server-side photo-assisted drafting and typed natural-language search. The environment template leaves both blank. A minimal server-side text-generation request has been verified against the saved local configuration; Agent 3 implements the draft and search endpoints; the student search UI connection remains pending. Verify the selected model and account capabilities in each environment rather than assuming IDs. Manual posting and standard filters remain usable without Gemini.
+Set `GEMINI_API_KEY` and `GEMINI_MODEL` locally for server-side photo-assisted drafting and typed natural-language search. The environment template leaves both blank. A minimal server-side text-generation request has been verified against the saved local configuration; Agent 3 implements the draft and search endpoints; the student feed now connects natural-language search to the grounded endpoint. Verify the selected model and account capabilities in each environment rather than assuming IDs. Manual posting and standard filters remain usable without Gemini.
 
 ## Maps
 
@@ -42,7 +42,9 @@ Public OSM tiles require visible attribution, appropriate caching, and prohibit 
 
 Deploy this repository as a Next.js project to Vercel or another Node-compatible Next.js host. Use `npm ci`, build `npm run build`; self-host with `npm start` and platform-provided PORT. Use Node 22+. Add environment variables in host settings (public variables are embedded at build time), set Supabase Site URL/redirect allowlist for the final HTTPS origin, rebuild, and check `/` and `/api/health`. Health reports process liveness and whether auth variables are present, not credential validity/database readiness. Preview origins need separate callback allowlisting.
 
-Agent 1 owns migrations. Follow [database setup](docs/database.md) when preparing a new project. The configured disposable demo project has the migration and verified landmark available, and live sign-in has passed. The existing deployment is https://coderedorion.vercel.app; it still needs the integrated student commit deployed. See [student integration verification](docs/student-integration.md) for remaining hosted checks.
+Agent 1 owns migrations. Follow [database setup](docs/database.md) when preparing a new project. The configured disposable demo project has the migration and verified landmark available, and live sign-in has passed. The existing deployment is https://coderedorion.vercel.app. See [student integration verification](docs/student-integration.md) for remaining hosted checks.
+
+AI routes declare a 60-second function maximum around the 45-second Gemini timeout; verify the deployed function settings. Read [search integration and rehearsal](docs/search-integration.md) for current evidence and limits.
 
 ## Team integration
 
@@ -50,7 +52,7 @@ Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/t
 
 Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
 
-Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Pending: student natural-language search UI, real map provider verification, hosted organizer/AI checks and a shared AI rate limiter. Agent 3 reports successful local live photo upload, organizer lifecycle and Gemini endpoint checks; see [its handoff](components/organizer/AGENT_3_HANDOFF.md).
+Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Pending: real map provider verification, hosted organizer/AI sign-off and a shared AI rate limiter. Agent 3 reports successful local live photo upload, organizer lifecycle and Gemini endpoint checks; see [its handoff](components/organizer/AGENT_3_HANDOFF.md).
 
 ## Dependency audit
 

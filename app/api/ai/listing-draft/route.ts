@@ -8,6 +8,7 @@ import { generate } from '@/lib/ai/gemini';
 import { reviewedDraft } from '@/lib/ai/policy';
 import { acquire, boundedRequest } from '@/lib/ai/request';
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 export async function POST(request: Request) {
   let release: (() => void) | undefined;
   try {
