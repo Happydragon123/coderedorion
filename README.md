@@ -1,6 +1,6 @@
 # Campus Food Rescue
 
-Agent 0 foundation for the [build plan](campus-food-rescue-handoffs.md). Next.js App Router, TypeScript, Supabase cookie sessions, Zod contracts, and Leaflet dependencies. Agent 1 implemented database migrations, RLS, private photo storage, authenticated food APIs, and atomic lifecycle operations. AI APIs and feature interfaces remain assigned to their owners. Agent 0 and Agent 1 froze the reviewed contracts; see [docs/contracts.md](docs/contracts.md) and [database setup](docs/database.md).
+Agent 0 foundation for the [build plan](campus-food-rescue-handoffs.md). Next.js App Router, TypeScript, Supabase cookie sessions, Zod contracts, and Leaflet dependencies. Agent 1 implemented database migrations, RLS, private photo storage, authenticated food APIs, and atomic lifecycle operations. Agent 2’s protected student feed, details, pickups and impact interface is integrated. AI APIs and organizer interfaces remain assigned to their owners. Agent 0 and Agent 1 froze the reviewed contracts; see [docs/contracts.md](docs/contracts.md) and [database setup](docs/database.md).
 
 ## Run locally
 
@@ -12,7 +12,7 @@ cp .env.example .env.local # only if .env.local does not already exist
 npm run dev
 ```
 
-Open http://localhost:3000. `.env.local` has been created with blank values and is ignored by Git. Fill it locally; never commit keys. Restart the dev server after changing environment variables.
+Open http://localhost:3000. `.env.local` is ignored by Git. Fill it locally; never commit keys. Restart the dev server after changing environment variables.
 
 ```sh
 npm run lint
@@ -42,7 +42,7 @@ Public OSM tiles require visible attribution, appropriate caching, and prohibit 
 
 Deploy this repository as a Next.js project to Vercel or another Node-compatible Next.js host. Use `npm ci`, build `npm run build`; self-host with `npm start` and platform-provided PORT. Use Node 22+. Add environment variables in host settings (public variables are embedded at build time), set Supabase Site URL/redirect allowlist for the final HTTPS origin, rebuild, and check `/` and `/api/health`. Health reports process liveness and whether auth variables are present, not credential validity/database readiness. Preview origins need separate callback allowlisting.
 
-Agent 1 owns migrations. Follow [database setup](docs/database.md) to review and apply the migration once to the intended Supabase project; this handoff has not applied it remotely. Deploying the foundation without secrets is supported, with protected routes locked. Live sign-in must be tested with configured Supabase. No deployment URL has been created; a hosting project/account is still needed.
+Agent 1 owns migrations. Follow [database setup](docs/database.md) when preparing a new project. The configured disposable demo project has the migration and verified landmark available, and live sign-in has passed. The existing deployment is https://coderedorion.vercel.app; it still needs the integrated student commit deployed. See [student integration verification](docs/student-integration.md) for remaining hosted checks.
 
 ## Team integration
 
@@ -50,7 +50,7 @@ Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/t
 
 Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
 
-Implemented backend: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, and opt-in two-account lifecycle/race tests. Pending: applying the migration, verifying campus landmarks, running live database/storage and deployed HTTP smoke tests, feature interfaces, AI endpoints, real provider verification, and rate limiting. Sign-in cannot be verified until Supabase URL, publishable key, Email auth and confirmed test account are available.
+Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Pending: organizer interface, AI endpoints, live photo/storage checks, real map provider verification, hosted student checks and rate limiting.
 
 ## Dependency audit
 
@@ -58,4 +58,4 @@ Initial npm audit reports five high findings in the development-only eslint-conf
 
 ## Foundation verification
 
-Verified locally: `npm run check` (lint, typecheck, 3 contract boundary tests, production build), `npm audit --omit=dev` (zero findings), production HTTP smoke checks (`/` and `/sign-in` 200 with explicit missing configuration, `/account` 307 to sign-in, `/api/health` 200 with auth_configured=false). Current backend validation: lint, typecheck, production build, and 5 local contract/photo tests pass; the real database lifecycle suite reports a skip without explicit disposable-project credentials. No migration was applied. Real Supabase sign-in, lifecycle/RLS/storage behavior, and hosted deployment remain unverified pending project/account setup; see [database verification](docs/database.md).
+`npm run check` covers lint, typecheck, contract/photo/geo tests and production build. Live Supabase database lifecycle and local cookie-authenticated HTTP suites passed with the user-authorized disposable demo project. Safari verified reservation, stale-page 409, cancellation, privacy, narrow layouts, geolocation denial and map tile failure fallback. Default tests skip live suites. Full evidence, repeat commands and deployment limits are in [student integration verification](docs/student-integration.md).

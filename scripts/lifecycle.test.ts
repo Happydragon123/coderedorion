@@ -70,6 +70,6 @@ test('real PostgreSQL lifecycle: race, privacy, ownership, cancellation, close, 
     assert.equal((await rpc(student,'cancel_food',{target:expClaim.id})).status,'expired');
   } finally {
     for (const id of ids) await organizer.rpc('patch_food_listing',{target:id,payload:{status:'closed'}});
-    await Promise.all([organizer.auth.signOut(),student.auth.signOut()]);
+    await Promise.all([organizer.auth.signOut({scope:'local'}),student.auth.signOut({scope:'local'})]);
   }
 });

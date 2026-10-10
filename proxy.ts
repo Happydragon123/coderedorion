@@ -4,7 +4,7 @@ import { supabaseConfig } from '@/lib/supabase/config';
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const config = supabaseConfig();
-  const protectedPage = ['/account','/my-pickups','/share','/manage'].some(path => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/'));
+  const protectedPage = ['/account','/listings','/my-pickups','/impact','/share','/manage'].some(path => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/'));
   if (!config) return protectedPage ? NextResponse.redirect(new URL('/sign-in', request.url)) : response;
   const supabase = createServerClient(config.url, config.key, { cookies: {
     getAll: () => request.cookies.getAll(),
