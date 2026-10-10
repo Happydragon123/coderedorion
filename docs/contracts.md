@@ -1,4 +1,4 @@
-# Shared contracts — provisional v0.1
+# Shared contracts — provisional v0.2
 
 Source of truth: `lib/contracts.ts`. Agent 0 owns changes. Agent 1 review is **pending**: no other agent/session or database decisions were available when the foundation was created. Do not freeze or start migrations until Agent 1 confirms the table shape, DTO joins, transaction rules, and upload limits below. Feature owners may develop against explicit `lib/fixtures.ts` fixtures. Production never falls back to fixtures.
 
@@ -29,14 +29,12 @@ All feature APIs require a verified session (including reads); `/api/health` is 
 | GET /api/me/listings | none | `{listings: Listing[]}` |
 | GET /api/impact | none | `{posted_portions,collected_portions,active_reserved_portions}` |
 | POST /api/uploads/photo | multipart `photo` | `{photo_path}` (201) |
-| POST /api/ai/listing-draft | multipart optional `photo`, `description`, `transcript`; at least one nonempty | `{draft,missing_fields}` |
+| POST /api/ai/listing-draft | multipart optional `photo`, `description`; at least one nonempty | `{draft,missing_fields}` |
 | POST /api/ai/search | `{query,origin?:{latitude,longitude},location_id?}` | `{filters,listings,summary}` |
-| POST /api/voice/transcribe | multipart `audio` | `{transcript}` |
-| POST /api/voice/speak | `{text}` | audio/mpeg binary |
 
-Queries: location_id, dietary_tag, origin_lat/origin_lng (paired), max_distance_m (requires origin; 1–100000), pickup_before. Distance is straight-line meters. Unknown tags do not match dietary filters. Search returns only data retrieved under validated deterministic filters. DTO draft contains all creation fields, each nullable; missing_fields lists required fields needing organizer input. Drafting never publishes or confirms dietary/allergen claims. Cap description/transcript input at 10000 characters in draft handlers; apply output schema field limits.
+Queries: location_id, dietary_tag, origin_lat/origin_lng (paired), max_distance_m (requires origin; 1–100000), pickup_before. Distance is straight-line meters. Unknown tags do not match dietary filters. Search returns only data retrieved under validated deterministic filters. DTO draft contains all creation fields, each nullable; missing_fields lists required fields needing organizer input. Drafting never publishes or confirms dietary/allergen claims. Cap description input at 10000 characters in draft handlers; apply output schema field limits.
 
-Photo max 5 MiB, JPEG/PNG/WebP; audio max 10 MiB/60s, WebM/MP4/Ogg/WAV/MPEG. Validate file signatures and actual decoded content server-side, not just MIME names. Agent 1 owns compression/storage paths; Agent 4 owns provider format adaptation. Private keys remain server-side. Rate limits/timeouts belong to endpoint owners.
+Photo max 5 MiB, JPEG/PNG/WebP. Validate file signatures and actual decoded content server-side, not just MIME names. Agent 1 owns compression/storage paths. Private keys remain server-side. Rate limits/timeouts belong to endpoint owners.
 
 Errors: `{error:{code,message}}`. 401 UNAUTHENTICATED; 403 FORBIDDEN; 404 NOT_FOUND; 409 CONFLICT (sold out, duplicate, lifecycle conflict); 422 INVALID_INPUT; 429 RATE_LIMITED; 503 UPSTREAM_UNAVAILABLE or CONFIGURATION_MISSING; 500 INTERNAL_ERROR. Do not leak secrets/provider responses. Shared client validates responses, throws `ApiClientError`, and never substitutes fake success.
 
@@ -46,4 +44,4 @@ Availability = total minus collected minus reserved with future deadline (databa
 
 ## Routing and ownership
 
-Agent 0: shared layout/styles/navigation, auth routes, proxy, lib/contracts, lib/api-client, fixtures, lib/supabase, lib/server shared helpers, package/lock, configuration/docs. Agent 1: migrations, seeds, lib/data, lib/server/food, non-AI/voice feature APIs. Agent 2: `(student)` routes `/listings`, `/listings/[id]`, `/my-pickups`, `/impact`; components/student, components/map, lib/geo. Agent 3: `(organizer)` routes `/share`, `/manage`, `/manage/[id]`; organizer components, lib/ai, api/ai. Agent 4: components/voice, lib/voice, api/voice. Route groups do not change URLs. Feature owners must call requirePageUser in protected page/layout and requireUser in every API handler, plus ownership checks/RLS. Proxy alone is not authorization.
+Agent 0: shared layout/styles/navigation, auth routes, proxy, lib/contracts, lib/api-client, fixtures, lib/supabase, lib/server shared helpers, package/lock, configuration/docs. Agent 1: migrations, seeds, lib/data, lib/server/food, non-AI feature APIs. Agent 2: `(student)` routes `/listings`, `/listings/[id]`, `/my-pickups`, `/impact`; components/student, components/map, lib/geo. Agent 3: `(organizer)` routes `/share`, `/manage`, `/manage/[id]`; organizer components, lib/ai, api/ai. Route groups do not change URLs. Feature owners must call requirePageUser in protected page/layout and requireUser in every API handler, plus ownership checks/RLS. Proxy alone is not authorization.

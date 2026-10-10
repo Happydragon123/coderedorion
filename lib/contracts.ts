@@ -26,7 +26,6 @@ export const originSchema = z.object({ latitude: z.number().min(-90).max(90), lo
 export const searchRequestSchema = z.object({ query: z.string().trim().min(1).max(1000), origin: originSchema.optional(), location_id: idSchema.optional() }).strict();
 export const draftSchema = z.object(Object.fromEntries(Object.entries(listingFields).map(([key, schema]) => [key, schema.nullable()])) as { [K in keyof typeof listingFields]: z.ZodNullable<(typeof listingFields)[K]> }).strict();
 export const draftResponseSchema = z.object({ draft: draftSchema, missing_fields: z.array(z.enum(['location_id','title','description','portions_total','pickup_instructions','pickup_deadline'])) }).strict();
-export const speakRequestSchema = z.object({ text: z.string().trim().min(1).max(1000) }).strict();
 export const impactSchema = z.object({ posted_portions: z.number().int().nonnegative(), collected_portions: z.number().int().nonnegative(), active_reserved_portions: z.number().int().nonnegative() }).strict();
 export const errorCodeSchema = z.enum(['UNAUTHENTICATED','FORBIDDEN','NOT_FOUND','CONFLICT','INVALID_INPUT','RATE_LIMITED','UPSTREAM_UNAVAILABLE','CONFIGURATION_MISSING','INTERNAL_ERROR']);
 export const errorEnvelopeSchema = z.object({ error: z.object({ code: errorCodeSchema, message: z.string() }).strict() }).strict();
@@ -36,9 +35,8 @@ export const listingResponseSchema = z.object({ listing: listingSchema }).strict
 export const reservationResponseSchema = z.object({ reservation: reservationSchema }).strict();
 export const reservationsResponseSchema = z.object({ reservations: z.array(reservationSchema) }).strict();
 export const photoResponseSchema = z.object({ photo_path: z.string().min(1).max(512) }).strict();
-export const transcriptResponseSchema = z.object({ transcript: z.string().max(10000) }).strict();
 export const searchResponseSchema = z.object({ filters: listingFiltersSchema, listings: z.array(listingSchema), summary: z.string().max(2000) }).strict();
-export const MEDIA_LIMITS = { photoBytes: 5 * 1024 * 1024, audioBytes: 10 * 1024 * 1024, audioSeconds: 60, photoMimeTypes: ['image/jpeg','image/png','image/webp'], audioMimeTypes: ['audio/webm','audio/mp4','audio/ogg','audio/wav','audio/mpeg'] } as const;
+export const MEDIA_LIMITS = { photoBytes: 5 * 1024 * 1024, photoMimeTypes: ['image/jpeg','image/png','image/webp'] } as const;
 export type Location = z.infer<typeof locationSchema>;
 export type Profile = z.infer<typeof profileSchema>;
 export type Listing = z.infer<typeof listingSchema>;
@@ -53,9 +51,7 @@ export type ErrorCode = z.infer<typeof errorCodeSchema>;
 
 // Metadata checks are a first pass; endpoint owners must inspect/decode content too.
 export const photoFileSchema = z.file().max(MEDIA_LIMITS.photoBytes).mime([...MEDIA_LIMITS.photoMimeTypes]);
-export const audioFileSchema = z.file().max(MEDIA_LIMITS.audioBytes).mime([...MEDIA_LIMITS.audioMimeTypes]);
 export const photoUploadRequestSchema = z.object({ photo: photoFileSchema }).strict();
-export const transcribeRequestSchema = z.object({ audio: audioFileSchema }).strict();
-export const draftRequestSchema = z.object({ photo: photoFileSchema.optional(), description: z.string().trim().max(10000).optional(), transcript: z.string().trim().max(10000).optional() }).strict().refine(v => Boolean(v.photo || v.description || v.transcript), 'Provide a photo, description, or transcript');
+export const draftRequestSchema = z.object({ photo: photoFileSchema.optional(), description: z.string().trim().max(10000).optional() }).strict().refine(v => Boolean(v.photo || v.description), 'Provide a photo or description');
 export const listingRowSchema = createListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema }).strict();
 export type ListingRow = z.infer<typeof listingRowSchema>;

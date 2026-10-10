@@ -39,10 +39,4 @@ export const api = {
   uploadPhoto: (body: FormData) => request('/api/uploads/photo', c.photoResponseSchema, { method: 'POST', body }),
   listingDraft: (body: FormData) => request('/api/ai/listing-draft', c.draftResponseSchema, { method: 'POST', body }),
   search: (body: c.SearchRequest) => request('/api/ai/search', c.searchResponseSchema, json('POST', c.searchRequestSchema.parse(body))),
-  transcribe: (body: FormData) => request('/api/voice/transcribe', c.transcriptResponseSchema, { method: 'POST', body }),
-  speak: async (text: string) => {
-    const response = await checkedResponse('/api/voice/speak', json('POST', c.speakRequestSchema.parse({ text })));
-    if (!response.headers.get('content-type')?.startsWith('audio/')) throw new ApiClientError(502, 'UPSTREAM_UNAVAILABLE', 'Expected an audio response.');
-    return response.blob();
-  },
 };

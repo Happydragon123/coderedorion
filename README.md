@@ -1,6 +1,6 @@
 # Campus Food Rescue
 
-Agent 0 foundation for the [build plan](campus-food-rescue-handoffs.md). Next.js App Router, TypeScript, Supabase cookie sessions, Zod contracts, and Leaflet dependencies. Food lifecycle/AI/voice APIs and interfaces remain assigned to feature owners. Contracts are provisional pending Agent 1 review; see [docs/contracts.md](docs/contracts.md).
+Agent 0 foundation for the [build plan](campus-food-rescue-handoffs.md). Next.js App Router, TypeScript, Supabase cookie sessions, Zod contracts, and Leaflet dependencies. Food lifecycle/AI APIs and interfaces remain assigned to feature owners. Contracts are provisional pending Agent 1 review; see [docs/contracts.md](docs/contracts.md).
 
 ## Run locally
 
@@ -30,7 +30,7 @@ Required for sign-in: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLI
 
 With blank Supabase configuration, the shell boots and displays the exact missing variable names; sign-in is disabled and private routes redirect to sign-in. There is no mock authentication or service-role bypass. Browser/server use the public key with user session cookies. Proxy refreshes cookies; protected pages and APIs must independently verify the user. Enable and test RLS when Agent 1 provisions the database. Never expose a service-role key.
 
-`GEMINI_API_KEY`, `GEMINI_MODEL`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_TTS_MODEL`, and `ELEVENLABS_STT_MODEL` are intentionally blank. Feature owners must verify models and account capabilities rather than assuming IDs. Only API keys are insufficient for voice: a voice ID and supported STT/TTS models are also required. These integrations are not yet implemented.
+Set `GEMINI_API_KEY` and `GEMINI_MODEL` locally for server-side photo-assisted drafting and typed natural-language search. The environment template leaves both blank. A minimal server-side text-generation request has been verified against the saved local configuration; feature integrations still belong to Agent 3. Verify the selected model and account capabilities in each environment rather than assuming IDs. Manual posting and standard filters remain usable without Gemini.
 
 ## Maps
 
