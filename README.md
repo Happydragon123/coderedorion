@@ -52,7 +52,7 @@ Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/t
 
 Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
 
-Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Pending: real map provider verification, hosted organizer/AI sign-off and a shared AI rate limiter. Agent 3 reports successful local live photo upload, organizer lifecycle and Gemini endpoint checks; see [its handoff](components/organizer/AGENT_3_HANDOFF.md).
+Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Hosted organizer/photo/search lifecycle and separate-session student search-to-pickup checks passed after switching to `gemini-3.5-flash-lite`; see [the verification report](docs/search-integration.md). AI drafts require manual entry of location, quantity, pickup instructions and deadline. Pending: real map provider verification, mobile/geolocation-denial checks, search caching and a shared AI rate limiter.
 
 ## Dependency audit
 

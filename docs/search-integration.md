@@ -39,7 +39,7 @@ node --import tsx scripts/check-ai-config.ts --live https://coderedorion.vercel.
 
 It uses the existing private organizer credentials and makes two minimal provider requests, logging only HTTP/contract status or the sanitized application error. It does not publish or print model output, keys or sessions. The process-local limiter remains pending for shared infrastructure. The build explicitly records a 60-second maximum for both AI functions; the available Vercel dashboard account does not have access to this project's deployed function details.
 
-## Latest deployed verification
+## Earlier quota-limited verification
 
 Vercel reported successful deployment of `a19f106`. The authenticated minimal search returned HTTP 200 and passed the response contract. The minimal text draft returned Google's HTTP 429. Two subsequent hosted flow runs passed real supplied-photo drafting, preservation of unknown fields, reviewed publishing and authenticated access to the attached WebP. Each stopped at search with Google's HTTP 429; the final run spaced Gemini requests 70 seconds apart. This confirms usable server configuration for both AI features, but does not establish enough provider quota for the complete hosted AI lifecycle.
 
@@ -58,3 +58,9 @@ All test records are disposable demo activity. The rehearsals added five simulat
 ## Flash-Lite follow-up
 
 After the user changed Production to `gemini-3.5-flash-lite` and redeployed, both minimal authenticated AI requests returned HTTP 200 with valid contracts. The first full photo rehearsal caught a model-supplied campus location despite an explicitly unknown landmark. The server now always clears location, quantity, pickup instructions and deadline from AI drafts and requires organizer entry. Ingredient, allergen and dietary claims also stay unconfirmed. Title and description remain editable assistance; endpoint schemas are unchanged. A regression test covers invented pickup fields using a valid campus location. Lint, typecheck, 13 tests and production build passed, with two opt-in suites skipped.
+
+Vercel reported successful deployment of `d580bf9`. The full hosted runner exited successfully with 10-second pacing: manual lifecycle, duplicate collection/impact, foreign mutation denial, two-account last-portion race, supplied-photo privacy, real Gemini draft with operational unknowns missing, reviewed publish, attached-photo access, grounded search, exclusion of unknown dietary tags from vegetarian search, private reservation/code, collection and unauthenticated AI rejection. All runner listings were closed and its sessions signed out locally.
+
+The separate regular organizer/private student browser sessions also completed hosted posting → real AI search → grounded card and summary with interpreted landmark → details → one-portion reservation → private pickup code → organizer close → collection. The student refreshed history and saw collected status with no code. Browser demo `4483ae9b-cc7b-490b-91e5-ffe767e6310d` remains closed. Earlier hosted browser cancellation and standard-filter fallback evidence remains above. The quota blocker and successful hosted search browser checks described in earlier sections are now resolved.
+
+This follow-up added four simulated collections, bringing this integration's total to nine; these are disposable demo records, not real rescued food. Environment files and the supplied photo remain uncommitted. Remaining work: shared AI rate limiting, search-interpretation caching, configured map provider verification and mobile/geolocation-denial checks. Both AI route build settings remain 60 seconds; direct Vercel function-dashboard inspection is still unavailable in the connected account.
