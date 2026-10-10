@@ -2,6 +2,8 @@
 
 Build plan and implementation handoffs. Foundation is implemented; feature work follows the ownership below. Selected stack: Next.js App Router, TypeScript, Supabase Auth/Postgres/Storage, Gemini. Use an existing repository's conventions if they differ. Working project name: Campus Food Rescue.
 
+Latest continuation handoff: [Agent 0 session handoff](docs/AGENT_0_HANDOFF.md). Hosted Flash-Lite photo/search/pickup verification passed; next priorities are shared AI rate limiting, search-interpretation caching, and final mobile/map checks. See that handoff for current commits, verified behavior, ownership and commands.
+
 ## 1. Start here: human setup
 
 1. Create a shared GitHub repository and invite teammates. Agree on one package manager (default npm) and one integration owner.
