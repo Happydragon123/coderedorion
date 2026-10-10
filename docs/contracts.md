@@ -1,6 +1,6 @@
-# Shared contracts — provisional v0.2
+# Shared contracts — reviewed v1.0
 
-Source of truth: `lib/contracts.ts`. Agent 0 owns changes. Agent 1 review is **pending**: no other agent/session or database decisions were available when the foundation was created. Do not freeze or start migrations until Agent 1 confirms the table shape, DTO joins, transaction rules, and upload limits below. Feature owners may develop against explicit `lib/fixtures.ts` fixtures. Production never falls back to fixtures.
+Source of truth: `lib/contracts.ts`. Agent 0 owns changes. Agent 0 and Agent 1 reviewed the table shape, DTO joins, transaction rules, and upload limits on 2026-10-10. These contracts are frozen for the database handoff; changes require renewed coordination. Feature owners may develop against explicit `lib/fixtures.ts` fixtures. Production never falls back to fixtures.
 
 ## Tables and DTOs
 
@@ -13,7 +13,7 @@ Listing DTO = listing row + nested `location` + `available_portions` + optional 
 
 ## Endpoints
 
-All feature APIs require a verified session (including reads); `/api/health` is public. Identity comes from `requireUser()`, never a request user ID. Each handler validates input and output with shared schemas and uses `apiError()` for failures. No feature endpoints are implemented in this foundation.
+All feature APIs require a verified session (including reads); `/api/health` is public. Identity comes from `requireUser()`, never a request user ID. Each handler validates input and output with shared schemas and uses `apiError()` for failures. Agent 1 implemented the non-AI endpoints below; AI endpoints remain assigned to Agent 3. Live database and deployed HTTP verification are pending; see [database setup](database.md).
 
 | Method / path | Request | Success (200 unless specified) |
 | --- | --- | --- |
@@ -38,9 +38,17 @@ Photo max 5 MiB, JPEG/PNG/WebP. Validate file signatures and actual decoded cont
 
 Errors: `{error:{code,message}}`. 401 UNAUTHENTICATED; 403 FORBIDDEN; 404 NOT_FOUND; 409 CONFLICT (sold out, duplicate, lifecycle conflict); 422 INVALID_INPUT; 429 RATE_LIMITED; 503 UPSTREAM_UNAVAILABLE or CONFIGURATION_MISSING; 500 INTERNAL_ERROR. Do not leak secrets/provider responses. Shared client validates responses, throws `ApiClientError`, and never substitutes fake success.
 
-## Database invariants for Agent 1 review
+## Reviewed database invariants
 
 Availability = total minus collected minus reserved with future deadline (database time); stale reserved rows are effectively expired without a scheduler. Reserve/cancel/collect lock the listing first and run atomically. Only one active/collected reservation per student/listing; cancelled reservations may be replaced. Reserve requires open/future listing. Close blocks new claims but honors existing claims until deadline. No deadline change after any reservation; total cannot fall below reserved+collected commitments. Cancel releases inventory only while open/future. Only organizer collects, scoped to listing and random unique pickup code, before deadline; retries cannot count twice. Codes are never public lookup credentials. RLS must protect codes and storage. Impact counts only collected as rescued, never fixture inventory.
+
+## Agent 0 / Agent 1 implementation decisions
+
+- Retain existing schemas and DTOs; derive identities from the verified user session. No additional client identity fields.
+- Lifecycle writes use atomic database functions with explicit authenticated execution grants, a fixed search path, and independent `auth.uid()`/ownership checks. Revoke default PUBLIC/anonymous function execution. All lifecycle and listing edits lock the listing first.
+- Availability aggregates all reservations without exposing codes. A security-invoker view must not aggregate reservation rows filtered to only the caller by RLS; use a narrowly scoped protected aggregate function returning counts only. Private reservation reads remain protected by student/organizer RLS.
+- Private `food-photos` storage uses user-owned UUID paths and authenticated listing-linked reads; owner reads permit draft previews. Objects are immutable through client privileges (no update/delete). Listing creation/edit validates an existing owner attachment path. Server uploads validate signatures and decoded pixels, then reencode with explicit `sharp` 0.35.5 and bounded image dimensions. Accepted MVP boundary: an authenticated owner can upload directly through Storage, bypassing endpoint decoding/reencoding; bucket MIME/size restrictions still apply. Storage policies do not attest decoded content. No service-role dependency is introduced.
+- No campus landmark seeds until independently verified coordinates are supplied.
 
 ## Routing and ownership
 
