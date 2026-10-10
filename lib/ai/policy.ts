@@ -1,9 +1,8 @@
 import { draftResponseSchema, listingFiltersSchema, type Listing, type ListingDraft, type Location, type SearchRequest } from '../contracts';
 const required = ['location_id','title','description','portions_total','pickup_instructions','pickup_deadline'] as const;
-export function reviewedDraft(draft: ListingDraft, locations: Location[]) {
-  const result = { ...draft, photo_path: null, dietary_tags: null, allergen_notes: null };
-  if (!locations.some(location => location.id === result.location_id)) result.location_id = null;
-  if (result.pickup_deadline && Date.parse(result.pickup_deadline) <= Date.now()) result.pickup_deadline = null;
+export function reviewedDraft(draft: ListingDraft) {
+  // Operational pickup details require organizer entry, regardless of model claims.
+  const result = { ...draft, location_id: null, portions_total: null, pickup_instructions: null, pickup_deadline: null, photo_path: null, dietary_tags: null, ingredients_notes: null, allergen_notes: null };
   return draftResponseSchema.parse({ draft: result, missing_fields: required.filter(key => result[key] === null) });
 }
 export function groundedFilters(raw: unknown, request: SearchRequest, locations: Location[]) {

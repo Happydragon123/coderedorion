@@ -6,12 +6,17 @@ import { draftSchema, listingFiltersSchema, type ListingDraft } from '../contrac
 import { groundedFilters, groundedSummary, reviewedDraft } from './policy';
 const empty: ListingDraft = { location_id: null, title: null, description: null, photo_path: null, portions_total: null, pickup_instructions: null, pickup_deadline: null, dietary_tags: null, ingredients_notes: null, allergen_notes: null };
 test('draft unknowns remain missing and AI cannot confirm dietary or allergen claims', () => {
-  const result = reviewedDraft({ ...empty, title: 'Leftovers', location_id: '00000000-0000-4000-8000-000000000099', dietary_tags: ['vegan'], allergen_notes: 'Safe for everyone', photo_path: 'invented' }, [demoLocation]);
+  const result = reviewedDraft({ ...empty, title: 'Leftovers', location_id: '00000000-0000-4000-8000-000000000099', dietary_tags: ['vegan'], allergen_notes: 'Safe for everyone', photo_path: 'invented' });
   assert.equal(result.draft.location_id, null);
   assert.equal(result.draft.dietary_tags, null);
   assert.equal(result.draft.allergen_notes, null);
   assert.equal(result.draft.photo_path, null);
   assert.deepEqual(result.missing_fields, ['location_id','description','portions_total','pickup_instructions','pickup_deadline']);
+});
+test('draft requires organizer entry even when the model invents valid pickup details', () => {
+  const result = reviewedDraft({ ...empty, location_id: demoLocation.id, portions_total: 12, pickup_instructions: 'Meet at the entrance', pickup_deadline: new Date(Date.now() + 3600000).toISOString(), ingredients_notes: 'Invented ingredients' });
+  for (const key of ['location_id', 'portions_total', 'pickup_instructions', 'pickup_deadline', 'ingredients_notes'] as const) assert.equal(result.draft[key], null);
+  for (const key of ['location_id', 'portions_total', 'pickup_instructions', 'pickup_deadline'] as const) assert.ok(result.missing_fields.includes(key));
 });
 test('search uses caller origin and landmark and rejects invented IDs and extra filters', () => {
   assert.throws(() => groundedFilters({ location_id: '00000000-0000-4000-8000-000000000099' }, {query:'food'}, [demoLocation]));

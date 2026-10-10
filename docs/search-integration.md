@@ -54,3 +54,7 @@ FOOD_TEST_AI_INTERVAL_MS=70000 node --import tsx lib/ai/verify-flows.ts --dispos
 This pacing does not guarantee available Google quota. It does not retry failures or change production rate limiting. Lint and typecheck passed after the runner change.
 
 All test records are disposable demo activity. The rehearsals added five simulated collections during this integration; uploads/history persist. All created demo listings were closed. No environment values or supplied photo were committed. A private scan found no Gemini key in the generated browser artifacts.
+
+## Flash-Lite follow-up
+
+After the user changed Production to `gemini-3.5-flash-lite` and redeployed, both minimal authenticated AI requests returned HTTP 200 with valid contracts. The first full photo rehearsal caught a model-supplied campus location despite an explicitly unknown landmark. The server now always clears location, quantity, pickup instructions and deadline from AI drafts and requires organizer entry. Ingredient, allergen and dietary claims also stay unconfirmed. Title and description remain editable assistance; endpoint schemas are unchanged. A regression test covers invented pickup fields using a valid campus location. Lint, typecheck, 13 tests and production build passed, with two opt-in suites skipped.
