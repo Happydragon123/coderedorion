@@ -1,0 +1,31 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { z } from 'zod';
+import { demoListing, demoLocation } from '../fixtures';
+import { draftSchema, listingFiltersSchema, type ListingDraft } from '../contracts';
+import { groundedFilters, groundedSummary, reviewedDraft } from './policy';
+const empty: ListingDraft = { location_id: null, title: null, description: null, photo_path: null, portions_total: null, pickup_instructions: null, pickup_deadline: null, dietary_tags: null, ingredients_notes: null, allergen_notes: null };
+test('draft unknowns remain missing and AI cannot confirm dietary or allergen claims', () => {
+  const result = reviewedDraft({ ...empty, title: 'Leftovers', location_id: '00000000-0000-4000-8000-000000000099', dietary_tags: ['vegan'], allergen_notes: 'Safe for everyone', photo_path: 'invented' }, [demoLocation]);
+  assert.equal(result.draft.location_id, null);
+  assert.equal(result.draft.dietary_tags, null);
+  assert.equal(result.draft.allergen_notes, null);
+  assert.equal(result.draft.photo_path, null);
+  assert.deepEqual(result.missing_fields, ['location_id','description','portions_total','pickup_instructions','pickup_deadline']);
+});
+test('search uses caller origin and landmark and rejects invented IDs and extra filters', () => {
+  assert.throws(() => groundedFilters({ location_id: '00000000-0000-4000-8000-000000000099' }, {query:'food'}, [demoLocation]));
+  assert.throws(() => groundedFilters({ title: 'pizza' }, {query:'pizza'}, [demoLocation]));
+  assert.deepEqual(groundedFilters({ origin_lat: 45, origin_lng: 40, max_distance_m: 500 }, {query:'nearby'}, [demoLocation]), {});
+  assert.deepEqual(groundedFilters({ origin_lat: 45, origin_lng: 40, max_distance_m: 500, dietary_tag: 'vegan' }, {query:'nearby',origin:{latitude:0,longitude:0},location_id:demoLocation.id}, [demoLocation]), { origin_lat:0,origin_lng:0,max_distance_m:500,dietary_tag:'vegan',location_id:demoLocation.id });
+});
+test('grounded summary reflects only returned inventory and stays within contract limits', () => {
+  assert.match(groundedSummary([]), /No available listings/);
+  const summary = groundedSummary([demoListing]);
+  assert.ok(summary.includes(demoListing.id));
+  assert.ok(summary.includes(`${demoListing.available_portions} available portions`));
+  assert.ok(groundedSummary(Array.from({length:200}, () => demoListing)).length <= 2000);
+});
+test('Gemini schemas serialize without unrepresentable preprocessors', () => {
+  for (const schema of [draftSchema, listingFiltersSchema]) assert.ok(z.toJSONSchema(schema, {io:'output'}));
+});
