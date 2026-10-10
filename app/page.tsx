@@ -1,0 +1,5 @@
+import Link from 'next/link';
+import { supabaseConfig, missingSupabaseMessage } from '@/lib/supabase/config';
+export default function Home() {
+  return <><p className="eyebrow">Campus Food Rescue · foundation</p><h1>Good food deserves another seat at the table.</h1><p className="muted">A shared starting point for posting surplus food, reserving a portion, and confirming a campus pickup.</p><Link className="button" href="/sign-in">Sign in to get started</Link>{!supabaseConfig() && <p className="notice">{missingSupabaseMessage}</p>}<div className="grid"><section className="panel"><h2>Share food</h2><p>Organizer posting and pickup management will connect to the shared API after database integration.</p></section><section className="panel"><h2>Find a pickup</h2><p>Student listings, reservations, and map views are the next feature handoffs.</p></section><section className="panel"><h2>Count collections</h2><p>Impact will count confirmed collected portions. No demo inventory or rescue totals are shown here.</p></section></div></>;
+}

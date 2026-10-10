@@ -1,0 +1,7 @@
+{
+  "name": "campus-food-rescue", "version": "0.1.0", "private": true,
+  "engines": { "node": ">=22.0.0" },
+  "scripts": { "dev": "next dev", "build": "next build --webpack", "start": "next start", "lint": "eslint .", "typecheck": "tsc --noEmit", "test": "tsx --test scripts/contracts.test.ts", "check": "npm run lint && npm run typecheck && npm test && npm run build" },
+  "dependencies": { "next": "^16.0.0", "react": "^19.2.0", "react-dom": "^19.2.0", "@supabase/ssr": "^0.7.0", "@supabase/supabase-js": "^2.75.0", "zod": "^4.1.0", "server-only": "^0.0.1", "leaflet": "^1.9.4", "react-leaflet": "^5.0.0" },
+  "devDependencies": { "typescript": "^5.9.0", "@types/node": "^22.0.0", "@types/react": "^19.2.0", "@types/react-dom": "^19.2.0", "@types/leaflet": "^1.9.20", "eslint": "^9.0.0", "eslint-config-next": "^16.0.0", "tsx": "^4.20.0" }
+}
