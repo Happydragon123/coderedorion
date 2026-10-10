@@ -9,6 +9,17 @@ async function main() {
   process.loadEnvFile('.env.local');
   const base = new URL(process.argv[3] || 'http://localhost:3000').origin;
   const photoName = process.argv[4] || 'catered_food.webp';
+  const aiInterval = Number(process.env.FOOD_TEST_AI_INTERVAL_MS || 0);
+  assert.ok(Number.isFinite(aiInterval) && aiInterval >= 0 && aiInterval <= 120000, 'AI interval must be between 0 and 120000 milliseconds');
+  let lastAiRequest = 0;
+  async function paceAi() {
+    const remaining = aiInterval - (Date.now() - lastAiRequest);
+    if (remaining > 0) {
+      console.log('WAIT: pacing the next Gemini request for the configured demo quota.');
+      await new Promise(resolve => setTimeout(resolve, remaining));
+    }
+    lastAiRequest = Date.now();
+  }
   const photo = new File([new Uint8Array(await readFile(photoName))], 'catered_food.webp', {type:'image/webp'});
   c.photoFileSchema.parse(photo);
   async function account(role: 'ORGANIZER' | 'STUDENT') {
@@ -79,6 +90,7 @@ async function main() {
     console.log('PASS photo: supplied catered_food.webp uploaded; owner preview allowed and student access denied before attachment.');
 
     const form=new FormData();form.set('photo',photo);form.set('description','Dummy demo photo. Title: DEMO catered food. Count, landmark, instructions and deadline are unknown. Do not make dietary or allergen claims.');
+    await paceAi();
     const draft=await checked(await organizer.send('/api/ai/listing-draft','POST',form),c.draftResponseSchema);
     for(const key of ['location_id','portions_total','pickup_instructions','pickup_deadline'] as const) {assert.equal(draft.draft[key],null);assert.ok(draft.missing_fields.includes(key));}
     assert.equal(draft.draft.dietary_tags,null);assert.equal(draft.draft.allergen_notes,null);
@@ -91,11 +103,13 @@ async function main() {
     assert.ok((await downloaded.arrayBuffer()).byteLength>0);
     console.log('PASS draft: real image Gemini draft kept unknowns missing; edited draft published and student could read its attached photo.');
 
+    await paceAi();
     const search=await checked(await student.send('/api/ai/search','POST',{query:'Find food at Student Center South',location_id:location.id}),c.searchResponseSchema);
     assert.ok(search.listings.some(row=>row.id===listing.id),'AI search omitted matching demo inventory');
     assert.ok(search.listings.every(row=>row.location_id===location.id && row.status==='open' && row.available_portions>0));
     assert.ok(!search.listings.some(row=>row.id===manual.id),'Closed inventory returned by search');
     for(const row of search.listings) assert.ok(!('pickup_code' in row),'Public search leaked code');
+    await paceAi();
     const dietary=await checked(await student.send('/api/ai/search','POST',{query:'Find vegetarian food at Student Center South',location_id:location.id}),c.searchResponseSchema);
     assert.equal(dietary.filters.dietary_tag,'vegetarian');assert.ok(!dietary.listings.some(row=>row.id===listing.id),'Unknown dietary information matched a positive filter');
     const pickup=await reserve(listing);

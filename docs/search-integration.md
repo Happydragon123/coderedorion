@@ -39,4 +39,18 @@ node --import tsx scripts/check-ai-config.ts --live https://coderedorion.vercel.
 
 It uses the existing private organizer credentials and makes two minimal provider requests, logging only HTTP/contract status or the sanitized application error. It does not publish or print model output, keys or sessions. The process-local limiter remains pending for shared infrastructure. The build explicitly records a 60-second maximum for both AI functions; the available Vercel dashboard account does not have access to this project's deployed function details.
 
-All test records are disposable demo activity. Local browser collection, hosted HTTP collection and hosted browser collection added three simulated collections during this integration; uploads/history persist. No environment values or supplied photo were committed. A private scan found no Gemini key in the generated browser artifacts.
+## Latest deployed verification
+
+Vercel reported successful deployment of `a19f106`. The authenticated minimal search returned HTTP 200 and passed the response contract. The minimal text draft returned Google's HTTP 429. Two subsequent hosted flow runs passed real supplied-photo drafting, preservation of unknown fields, reviewed publishing and authenticated access to the attached WebP. Each stopped at search with Google's HTTP 429; the final run spaced Gemini requests 70 seconds apart. This confirms usable server configuration for both AI features, but does not establish enough provider quota for the complete hosted AI lifecycle.
+
+The private student browser also displayed the rate-limit error clearly. Back to standard results restored the open demo card. The extra browser listing was then closed without reservation or collection. Successful hosted search cards and a browser search-to-pickup sequence remain pending until Gemini quota is available. No authentication or provider checks were bypassed.
+
+The opt-in flow runner supports pacing for low-quota demo projects:
+
+```sh
+FOOD_TEST_AI_INTERVAL_MS=70000 node --import tsx lib/ai/verify-flows.ts --disposable https://coderedorion.vercel.app catered_food.webp
+```
+
+This pacing does not guarantee available Google quota. It does not retry failures or change production rate limiting. Lint and typecheck passed after the runner change.
+
+All test records are disposable demo activity. The rehearsals added five simulated collections during this integration; uploads/history persist. All created demo listings were closed. No environment values or supplied photo were committed. A private scan found no Gemini key in the generated browser artifacts.
