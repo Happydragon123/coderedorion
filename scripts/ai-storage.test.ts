@@ -23,6 +23,7 @@ test('shared AI storage: admission race, ownership, release, cache dedup and iso
   const claims: { client: typeof first; token: string }[] = [];
   try {
     assert.ok((await anonymous.rpc('ai_admit')).error, 'Anonymous admission must fail');
+    assert.ok((await anonymous.rpc('ai_cache_claim', { p_cache_key: key })).error, 'Anonymous cache access must fail');
     assert.ok((await first.from('ai_runtime_config').update({ project_per_day: 100000 }).eq('singleton', true)).error, 'Clients cannot loosen budgets');
     const race = await Promise.all([rpc(first, 'ai_admit'), rpc(second, 'ai_admit')]);
     assert.equal(race.filter(value => value.allowed).length, 1, 'Default one-user concurrency must span clients');
@@ -54,6 +55,43 @@ test('shared AI storage: admission race, ownership, release, cache dedup and iso
     assert.equal(reclaimed.status, 'claimed');
     assert.notEqual(reclaimed.claim_id, isolated.claim_id);
     claims.push({ client: other, token: reclaimed.claim_id });
+    if (process.env.FOOD_TEST_AI_STORAGE_EXTENDED_RUN === '1') {
+      // Administrator fixture: clean admissions, project_concurrency=1, lease_seconds=60;
+      // remaining defaults unchanged. This does not alter configuration itself.
+      const projectRace = await Promise.all([rpc(first, 'ai_admit'), rpc(other, 'ai_admit')]);
+      assert.equal(projectRace.filter(value => value.allowed).length, 1, 'Two distinct users share the project slot');
+      const denied = projectRace.find(value => !value.allowed)!;
+      assert.equal(denied.reason, 'project_concurrency');
+      const projectWinner = projectRace.find(value => value.allowed)!;
+      const owner = projectRace[0].allowed ? first : other;
+      const contender = owner === first ? other : first;
+      // Intentionally abandon this admitted lease, simulating process termination.
+      // The cache claim above is also left unfinished. Neither holds a transaction.
+      await new Promise(resolve => setTimeout(resolve, 60000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const recovered = await rpc(contender, 'ai_admit');
+      assert.equal(recovered.allowed, true, 'An expired project lease frees capacity');
+      await rpc(contender, 'ai_release', { p_lease_id: recovered.lease_id });
+      await rpc(owner, 'ai_release', { p_lease_id: projectWinner.lease_id });
+      const expiredClaim = await rpc(other, 'ai_cache_claim', { p_cache_key: key });
+      assert.equal(expiredClaim.status, 'claimed', 'Expired interpretation claim can be replaced');
+      assert.notEqual(expiredClaim.claim_id, reclaimed.claim_id);
+      claims.push({ client: other, token: expiredClaim.claim_id });
+      assert.equal(await rpc(other, 'ai_cache_complete', { p_cache_key: key, p_claim_id: reclaimed.claim_id, p_filters: {} }), false, 'Stale claim cannot publish');
+      await rpc(other, 'ai_cache_abandon', { p_cache_key: key, p_claim_id: reclaimed.claim_id });
+      assert.equal((await rpc(other, 'ai_cache_claim', { p_cache_key: key })).status, 'pending', 'Stale abandon cannot remove replacement');
+      // Contender has one fresh admission; releasing slots must not refund attempts.
+      for (let attempt = 1; attempt < 6; attempt++) {
+        const admitted = await rpc(contender, 'ai_admit');
+        assert.equal(admitted.allowed, true);
+        await rpc(contender, 'ai_release', { p_lease_id: admitted.lease_id });
+      }
+      const exhausted = await rpc(contender, 'ai_admit');
+      assert.equal(exhausted.allowed, false);
+      assert.equal(exhausted.reason, 'user_budget');
+      assert.ok(exhausted.retry_after_seconds >= 1);
+    }
+
   } finally {
     for (const lease of leases) await first.rpc('ai_release', { p_lease_id: lease });
     for (const claim of claims) await claim.client.rpc('ai_cache_abandon', { p_cache_key: key, p_claim_id: claim.token });
