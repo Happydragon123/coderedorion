@@ -1,6 +1,7 @@
 import 'server-only';
 import { z } from 'zod';
 import { ApiError } from '@/lib/server/api';
+import { providerFailureMessage } from './provider-errors';
 export async function generate<T>(instructions: string, prompt: string, schema: z.ZodType<T>, photo?: Buffer): Promise<T> {
   const key = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL;
   if (!key || !model) {
@@ -16,7 +17,7 @@ export async function generate<T>(instructions: string, prompt: string, schema: 
       body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents: [{ role: 'user', parts }], generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(schema, { io: 'output' }) } }),
     });
     if (response.status === 429) throw new ApiError(429, 'RATE_LIMITED', 'Gemini is busy. Try again later or use manual posting and standard filters.');
-    if (!response.ok) throw new Error('Provider failed');
+    if (!response.ok) throw new ApiError(503, 'UPSTREAM_UNAVAILABLE', providerFailureMessage(response.status, await response.json().catch(() => null)));
     const data = await response.json();
     const candidate = data.candidates?.[0];
     if (candidate?.finishReason !== 'STOP') throw new Error('Incomplete output');

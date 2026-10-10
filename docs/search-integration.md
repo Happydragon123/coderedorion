@@ -19,4 +19,24 @@ The integrated production app ran at `http://localhost:3110`. Safari's regular w
 - Student reserved, cancelled, confirmed availability restored from one to two, then reserved again. The replacement private pickup code differed.
 - Organizer closed the listing and confirmed the student's existing pickup. The UI reported collected and cleared its code input. The closed listing and demo history remain; one simulated collection was added, not real rescued food.
 
-`npm run check` passed: lint, typecheck, 11 tests and production build; two opt-in live suites skipped. Agent 3's earlier HTTP/race/privacy evidence remains in [its flow report](../components/organizer/FLOW_VERIFICATION.md). A hosted rehearsal must verify this new search UI separately.
+`npm run check` passed: lint, typecheck, 12 tests and production build; two opt-in live suites skipped. Agent 3's earlier HTTP/race/privacy evidence remains in [its flow report](../components/organizer/FLOW_VERIFICATION.md).
+
+## Hosted rehearsal
+
+Integration commit `3fb8357` was pushed to `main`; GitHub's Vercel check reported successful deployment to https://coderedorion.vercel.app. Both distinct accounts signed in through separate regular/private Safari sessions and landed on Account using the new sign-in navigation.
+
+- Organizer manually published a labeled one-portion vegetarian demo listing. Student standard filters found it. Search reported missing Gemini configuration and retained its standard-filter fallback; Back to standard results restored the prior vegetarian results.
+- Student reserved, cancelled (code disappeared and availability returned to one), then reserved again with a distinct replacement code. Organizer closed the listing, confirmed collection and retried confirmation successfully. The listing remains closed.
+- The real hosted HTTP runner passed manual lifecycle, owner-only mutations, idempotent collection/impact, last-portion race and supplied-photo private upload/owner preview/student denial before attachment. It stopped at the AI draft with HTTP 503 CONFIGURATION_MISSING and closed its created listings in cleanup.
+- Authenticated minimal requests to both hosted AI endpoints confirmed CONFIGURATION_MISSING. The user updated settings and reported redeployment ready; the first subsequent retest still returned the same error. Hosted AI success is not yet verified.
+- After deployment of `dc86b14`, both variables were present, but both endpoints returned UPSTREAM_UNAVAILABLE. Provider failures now distinguish invalid keys, denied access, unavailable models and rejected requests using fixed messages; raw provider text and credentials are never reflected.
+
+`dc86b14` adds exact missing server-variable names to the existing authenticated error envelope and a private diagnostic command:
+
+```sh
+node --import tsx scripts/check-ai-config.ts --live https://coderedorion.vercel.app
+```
+
+It uses the existing private organizer credentials and makes two minimal provider requests, logging only HTTP/contract status or the sanitized application error. It does not publish or print model output, keys or sessions. The process-local limiter remains pending for shared infrastructure. The build explicitly records a 60-second maximum for both AI functions; the available Vercel dashboard account does not have access to this project's deployed function details.
+
+All test records are disposable demo activity. Local browser collection, hosted HTTP collection and hosted browser collection added three simulated collections during this integration; uploads/history persist. No environment values or supplied photo were committed. A private scan found no Gemini key in the generated browser artifacts.
