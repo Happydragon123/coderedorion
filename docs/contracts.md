@@ -5,7 +5,7 @@ Source of truth: `lib/contracts.ts`. Agent 0 owns changes. Agent 0 and Agent 1 r
 ## Tables and DTOs
 
 - profiles: id (Auth UUID PK), display_name, organization_name nullable.
-- locations: id UUID PK, name, latitude, longitude. Agent 1 seeds verified landmarks only.
+- locations: id UUID PK, name, latitude, longitude, google_maps_url nullable. Agent 1 seeds verified landmarks only. Google Maps links are manually verified administrator input, validated HTTPS allowlisted Google Maps URLs; location DTOs accept an omitted or null link for backward compatibility. Agent 0/Agent 1 coordinated this additive extension; coordinates remain authoritative for distances.
 - listings: id UUID PK, organizer_id (profiles), location_id (locations), title, description, photo_path nullable, portions_total positive integer, pickup_instructions, pickup_deadline timestamptz, dietary_tags text array, ingredients_notes/allergen_notes nullable, status open|closed, created_at timestamptz.
 - reservations: id UUID PK, listing_id, student_id (profiles), pickup_code, status reserved|collected|cancelled|expired, created_at, collected_at nullable.
 

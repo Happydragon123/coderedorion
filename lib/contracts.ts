@@ -3,7 +3,20 @@ import { z } from 'zod';
 export const idSchema = z.uuid();
 export const timestampSchema = z.iso.datetime({ offset: true });
 export const dietaryTagSchema = z.enum(['vegetarian', 'vegan', 'halal', 'gluten_free']);
-export const locationSchema = z.object({ id: idSchema, name: z.string().min(1).max(120), latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180) }).strict();
+// Only manually verified Google Maps links; coordinates remain independently verified.
+export const googleMapsUrlSchema = z.string().min(1).max(2048).refine(value => {
+  if (/[\u0000-\u0020\u007f\\]/.test(value) || /%(?:0[0-9a-f]|1[0-9a-f]|7f)/i.test(value)) return false;
+  const authority = /^https:\/\/([^/?#]+)(?:[/?#]|$)/.exec(value)?.[1];
+  if (!authority || !['maps.app.goo.gl', 'goo.gl', 'www.google.com', 'google.com', 'maps.google.com'].includes(authority)) return false;
+  try {
+    const url = new URL(value);
+    if (url.username || url.password || url.port) return false;
+    if (url.hostname === 'maps.app.goo.gl') return url.pathname.length > 1;
+    if (url.hostname === 'goo.gl' || url.hostname === 'google.com' || url.hostname === 'www.google.com') return url.pathname === '/maps' || url.pathname.startsWith('/maps/');
+    return true;
+  } catch { return false; }
+}, 'Use an HTTPS Google Maps share link from a supported Google Maps host.');
+export const locationSchema = z.object({ id: idSchema, name: z.string().min(1).max(120), latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180), google_maps_url: googleMapsUrlSchema.nullable().optional() }).strict();
 export const profileSchema = z.object({ id: idSchema, display_name: z.string().min(1).max(120), organization_name: z.string().max(120).nullable() }).strict();
 const listingFields = {
   location_id: idSchema, title: z.string().trim().min(1).max(160), description: z.string().trim().min(1).max(4000),
