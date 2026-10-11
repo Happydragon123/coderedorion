@@ -12,7 +12,7 @@ export function ListingPhoto({ path, title }: { path: string | null; title: stri
   }, [path]);
   const state = useResource(loader);
   if (!path) return null;
-  return <>{state.loading && <p role="status">Loading photo…</p>}{state.error && <p>Photo unavailable. <button onClick={state.refresh}>Retry photo</button></p>}{state.data && <>
+  return <>{state.loading && <p className="loading-state" role="status">Loading photo…</p>}{state.error && <p>Photo unavailable. <button onClick={state.refresh}>Retry photo</button></p>}{state.data && <>
     {/* Private signed URLs are short-lived and cannot use the shared image optimizer. */}
     {/* eslint-disable-next-line @next/next/no-img-element */}
     <img className={styles.photo} src={state.data} alt={title}/>

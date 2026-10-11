@@ -82,7 +82,7 @@ export function ListingForm() {
         </section>
         <div className={styles.publish}><p>Review your details before sharing.</p><button disabled={!loaded || !locations.length}>Publish listing</button></div>
       </fieldset>
-      {busy && <p role="status">Working…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
+      {busy && <p className="loading-state" role="status">Working…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
     </form>
     <aside className={styles.assistancePanel}>
       <span className="section-kicker">A little help</span><h2>Start with a photo</h2>

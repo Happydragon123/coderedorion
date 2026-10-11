@@ -30,10 +30,10 @@ export function ManageListings({ listingId }: { listingId?: string }) {
   const selected = listingId ? rows.filter(row => row.id === listingId) : rows;
   return <>
     <div className={styles.toolbar}><p>Closing stops new reservations. Existing pickups stay valid until the deadline.</p><button className="button-secondary" onClick={() => void refresh()} disabled={loading || busy}>Refresh</button></div>
-    {loading && <p role="status">Loading your listings…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
+    {loading && <p className="loading-state" role="status">Loading your listings…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
     {!loading && !error && !selected.length && <div className="empty-state"><h2>{listingId ? 'Listing unavailable' : 'Ready to share something?'}</h2><p>{listingId ? 'This listing is unavailable or is not owned by your account.' : 'Your shared food will appear here, ready for you to manage pickups.'}</p><Link className="button" href="/share">Share food</Link></div>}
-    <div className={styles.listings}>{selected.map(row => <article className={styles.listing} key={row.id}>
-      <span className={`${styles.status} ${row.status === 'closed' ? styles.statusClosed : ''}`}>{Date.parse(row.pickup_deadline) <= now ? 'Expired' : row.status}</span>
+    <div className={`${styles.listings} ${listingId ? styles.listingDetail : ''}`}>{selected.map(row => <article className={styles.listing} key={row.id}>
+      <span className={`${styles.status} ${row.status === 'closed' || Date.parse(row.pickup_deadline) <= now ? styles.statusClosed : ''}`}>{Date.parse(row.pickup_deadline) <= now ? 'Expired' : row.status}</span>
       <h2><Link href={`/manage/${row.id}`}>{row.title}</Link></h2>
       <p className={styles.metadata}>{row.location.name}</p>
       <div className={styles.count}><strong>{row.available_portions}</strong> available <span className="muted">of {row.portions_total} portions posted</span></div>
