@@ -6,6 +6,7 @@ import type { Listing } from '@/lib/contracts';
 import { SharerIdentity } from '@/components/shared/sharer-identity';
 import { directionsUrl, formatDistance } from '@/lib/geo';
 import styles from './student.module.css';
+import { ListingPhoto } from './listing-photo';
 export const dietaryLabels = { vegetarian: 'Vegetarian', vegan: 'Vegan', halal: 'Halal', gluten_free: 'Gluten-free' };
 export function errorMessage(error: unknown) {
   if (error instanceof ApiClientError) {
@@ -15,9 +16,9 @@ export function errorMessage(error: unknown) {
   }
   return 'Unable to reach the service. Please try again.';
 }
-export function Failure({ message, retry }: { message: string; retry?: () => void }) { return <div className="notice" role="alert"><p>{message}</p><Link href="/sign-in">Sign in</Link>{retry && <button onClick={retry}>Try again</button>}</div>; }
+export function Failure({ message, retry, sessionExpired = false }: { message: string; retry?: () => void; sessionExpired?: boolean }) { return <div className="notice" role="alert"><p>{message}</p>{sessionExpired ? <Link href="/sign-in">Sign in</Link> : <Link href="/listings">Browse food</Link>}{!sessionExpired && retry && <button onClick={retry}>Try again</button>}</div>; }
 export function useResource<T>(loader: () => Promise<T>) {
-  const [state, setState] = useState<{ data?: T; error?: string; loading: boolean }>({ loading: true });
+  const [state, setState] = useState<{ data?: T; error?: string; sessionExpired?: boolean; loading: boolean }>({ loading: true });
   const [version, setVersion] = useState(0);
   const pending = useRef<{ loader: () => Promise<T>; version: number; promise: Promise<T> } | undefined>(undefined);
   useEffect(() => {
@@ -27,7 +28,7 @@ export function useResource<T>(loader: () => Promise<T>) {
     if (!pending.current || pending.current.loader !== loader || pending.current.version !== version) {
       pending.current = { loader, version, promise: Promise.resolve().then(loader) };
     }
-    pending.current.promise.then(data => { if (current) setState({ data, loading: false }); }).catch(error => { if (current) setState({ error: errorMessage(error), loading: false }); });
+    pending.current.promise.then(data => { if (current) setState({ data, loading: false }); }).catch(error => { if (current) setState({ error: errorMessage(error), sessionExpired: error instanceof ApiClientError && error.status === 401, loading: false }); });
     return () => { current = false; };
   }, [loader, version]);
   return { ...state, refresh: () => { setState({ loading: true }); setVersion(v => v + 1); } };
@@ -43,6 +44,7 @@ export function Dietary({ listing }: { listing: Listing }) { return <div classNa
 export function FoodCard({ listing, now, viewerId }: { listing: Listing; now: number; viewerId?: string }) {
   const own = viewerId === listing.organizer_id;
   return <article className={styles.card}>
+    <ListingPhoto path={listing.photo_path} title={listing.title} variant="card"/>
     {own && <p className="eyebrow">Your listing</p>}
     <span className={styles.status} data-state={listing.status !== 'open' || listing.available_portions === 0 || Date.parse(listing.pickup_deadline) <= now ? 'inactive' : 'available'}>{availability(listing, now)}</span>
     <h2><Link href={`/listings/${listing.id}`}>{listing.title}</Link></h2><SharerIdentity identity={listing.sharer}/>

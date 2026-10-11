@@ -1,20 +1,39 @@
- 'use client';
-import { useCallback } from 'react';
+'use client';
+import { useEffect, useReducer } from 'react';
 import { createClient } from '@/lib/supabase/browser';
-import { useResource } from './common';
+import { initialPhotoState, photoReducer } from './photo-state';
 import styles from './student.module.css';
-export function ListingPhoto({ path, title }: { path: string | null; title: string }) {
-  const loader = useCallback(async () => {
-    if (!path) return null;
-    const { data, error } = await createClient().storage.from('food-photos').createSignedUrl(path, 300);
-    if (error) throw error;
-    return data.signedUrl;
-  }, [path]);
-  const state = useResource(loader);
-  if (!path) return null;
-  return <>{state.loading && <p className="loading-state" role="status">Loading photo…</p>}{state.error && <p>Photo unavailable. <button onClick={state.refresh}>Retry photo</button></p>}{state.data && <>
-    {/* Private signed URLs are short-lived and cannot use the shared image optimizer. */}
+
+type PhotoProps = { path: string | null; title: string; variant?: 'card' | 'detail' };
+export function ListingPhoto({ path, title, variant = 'detail' }: PhotoProps) {
+  const className = variant === 'card' ? styles.cardPhoto : styles.detailPhoto;
+  return <div className={className}>{path
+    ? <SignedPhoto key={path} path={path} title={title} variant={variant}/>
+    : <p className={styles.photoFallback}>No photo provided</p>}</div>;
+}
+
+function SignedPhoto({ path, title, variant }: PhotoProps & { path: string }) {
+  const [state, dispatch] = useReducer(photoReducer, initialPhotoState);
+  const attempt = state.attempt;
+  useEffect(() => {
+    let current = true;
+    async function load() {
+      try {
+        const { data, error } = await createClient().storage.from('food-photos').createSignedUrl(path, 300);
+        if (error || !data?.signedUrl) throw new Error('Photo unavailable');
+        if (current) dispatch({ type: 'signed', attempt, url: data.signedUrl });
+      } catch {
+        if (current) dispatch({ type: 'failed', attempt });
+      }
+    }
+    void load();
+    return () => { current = false; };
+  }, [path, attempt]);
+  if (state.status === 'loading') return <p className={styles.photoFallback} role="status">Loading photo…</p>;
+  if (state.status === 'failed') return <div className={styles.photoFallback} role="status"><p>Photo unavailable.</p><button type="button" className={styles.secondary} onClick={() => dispatch({ type: 'retry' })} aria-label={`Retry photo for ${title}`}>Retry photo</button></div>;
+  return <>
+    {/* Private signed URLs bypass the shared image optimizer. */}
     {/* eslint-disable-next-line @next/next/no-img-element */}
-    <img className={styles.photo} src={state.data} alt={title}/>
-  </>}</>;
+    <img key={attempt} className={styles.photo} src={state.url} alt={title} loading={variant === 'card' ? 'lazy' : 'eager'} onError={() => dispatch({ type: 'failed', attempt })}/>
+  </>;
 }

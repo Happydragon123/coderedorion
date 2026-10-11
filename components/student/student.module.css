@@ -34,7 +34,13 @@
 .tags { display:flex; gap:.5rem; flex-wrap:wrap; margin:1rem 0 1.5rem; font-size:.8rem; color:var(--muted); }
 .tag { background:var(--surface-soft); border-radius:5px; padding:.3rem .55rem; font-size:.75rem; }
 .code { display:block; font-size:clamp(1.1rem,4vw,1.7rem); letter-spacing:.13em; overflow-wrap:anywhere; margin:.5rem 0 1rem; padding:1.2rem; background:var(--accent-soft); border:1px dashed #b2c1a9; border-radius:8px; color:var(--ink); font-variant-numeric:tabular-nums; }
-.photo { display:block; width:100%; height:auto; max-height:440px; object-fit:contain; border-radius:var(--radius); background:var(--surface-soft); margin:1.5rem 0; }
+.photo { display:block; width:100%; height:auto; max-height:440px; object-fit:contain; border-radius:var(--radius); background:var(--surface-soft); }
+.cardPhoto { aspect-ratio:4 / 3; margin-bottom:1rem; overflow:hidden; border-radius:var(--radius); background:var(--surface-soft); }
+.cardPhoto .photo { height:100%; max-height:none; object-fit:cover; }
+.detailPhoto { margin:1.5rem 0; border-radius:var(--radius); background:var(--surface-soft); overflow:hidden; }
+.photoFallback { min-height:8rem; margin:0; padding:1rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5rem; color:var(--muted); text-align:center; }
+.cardPhoto .photoFallback { height:100%; }
+.photoFallback p { margin:0; }
 .map { height:420px; width:100%; margin:1rem 0; border-radius:var(--radius); overflow:hidden; }
 .stat { font-size:clamp(3rem,6vw,4.5rem); font-weight:500; line-height:1.1; letter-spacing:-.06em; color:var(--accent); font-variant-numeric:tabular-nums; margin:1rem 0; }
 .student button[aria-pressed="false"] { background:var(--surface-soft); color:var(--ink); }
@@ -70,3 +76,7 @@
   .detailPanel dt:not(:first-child) { margin-top:1rem; }
   .resultHeading .actions { width:100%; }
 }
+
+.searchProgress { margin-top:1rem; padding:1.25rem; border:1px solid var(--accent); border-left:4px solid var(--accent); border-radius:12px; background:var(--accent-soft); color:var(--ink); overflow-wrap:anywhere; }
+.searchProgress strong { display:block; font-size:1.15rem; }
+.searchProgress p { margin:.5rem 0 0; }

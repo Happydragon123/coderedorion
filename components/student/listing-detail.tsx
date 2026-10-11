@@ -45,7 +45,7 @@ function ListingDetailContent({ id }: { id: string }) {
   return <>
     <Link className={styles.backLink} href="/listings">← All food</Link>
     {state.loading && <p className="loading-state" role="status">Loading listing and your pickup status…</p>}
-    {state.error && <Failure message={state.error} retry={refresh}/>}
+    {state.error && <Failure sessionExpired={state.sessionExpired} message={state.error} retry={refresh}/>}
     {state.data && (() => {
       const { listing, context } = state.data;
       const inactive = listing.status !== 'open' || listing.available_portions === 0 || Date.parse(listing.pickup_deadline) <= now;

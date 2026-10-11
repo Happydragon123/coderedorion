@@ -8,12 +8,21 @@ import { message } from './common';
 import styles from './organizer.module.css';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
 import { chicagoToday, dateTimeToIso, EMPTY_DATE_TIME } from '@/lib/date-time';
+const fieldLabels: Record<string, string> = { title: 'Title', description: 'Description', location_id: 'Campus location', portions_total: 'Number of portions', pickup_instructions: 'Pickup instructions', pickup_deadline: 'Pickup deadline', ingredients_notes: 'Ingredients notes', allergen_notes: 'Allergen notes', dietary_tags: 'Dietary information', photo_path: 'Food photo' };
+const fieldIds: Record<string, string> = { location_id: 'location', pickup_deadline: 'pickup-deadline-date', photo_path: 'photo' };
 const initial = { title: '', description: '', location_id: '', portions_total: '', pickup_instructions: '', pickup_deadline: '', ingredients_notes: '', allergen_notes: '' };
 export function ListingForm() {
   const router = useRouter();
   const [pickupTime, setPickupTime] = useState({ ...EMPTY_DATE_TIME });
   const [fields, setFields] = useState(initial), [tags, setTags] = useState<string[]>([]), [locations, setLocations] = useState<Location[]>([]);
-  const [loaded, setLoaded] = useState(false), [error, setError] = useState(''), [busy, setBusy] = useState(false), [notice, setNotice] = useState('');
+  const [loaded, setLoaded] = useState(false), [error, setError] = useState(''), [stage, setStage] = useState(''), [notice, setNotice] = useState('');
+  const busy = Boolean(stage);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  function invalid(errors: Record<string, string>) {
+    setFieldErrors(errors); setError('Please correct the highlighted fields.');
+    const first = Object.keys(errors)[0];
+    requestAnimationFrame(() => { document.getElementById(fieldIds[first] ?? first)?.focus(); });
+  }
   const [photo, setPhoto] = useState<File>(), [preview, setPreview] = useState(''), [photoPath, setPhotoPath] = useState<string | null>(null), [hint, setHint] = useState('');
   async function loadLocations() { setError(''); try { setLocations((await api.locations()).locations); setLoaded(true); } catch (e) { setError(message(e)); } }
   useEffect(() => { void api.locations().then(({ locations }) => { setLocations(locations); setLoaded(true); }).catch(e => setError(message(e))); }, []);
@@ -24,50 +33,68 @@ export function ListingForm() {
     setTags([]);
   }
   async function draft() {
-    setBusy(true); setError(''); setNotice('');
-    try { const body = new FormData(); if (photo) body.set('photo', photo); if (hint.trim()) body.set('description', hint); const result = await api.listingDraft(body); applyDraft(result.draft); setNotice(`Draft applied. Review every field and confirm dietary information yourself. Missing: ${result.missing_fields.join(', ') || 'none'}.`); }
-    catch (e) { setError(message(e)); } finally { setBusy(false); }
+    setStage('Generating editable draft…'); setError(''); setNotice(''); setFieldErrors({});
+    try { const body = new FormData(); if (photo) body.set('photo', photo); if (hint.trim()) body.set('description', hint); const result = await api.listingDraft(body); applyDraft(result.draft); setNotice(`Draft applied. Review every field and confirm dietary information yourself. Missing: ${result.missing_fields.map(field => fieldLabels[field]).join(', ') || 'none'}.`); }
+    catch (e) { setError(message(e)); } finally { setStage(''); }
   }
   async function publish(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setBusy(true); setError(''); setNotice('');
+    e.preventDefault(); setError(''); setNotice(''); setFieldErrors({});
     try {
       let pickupDeadline: string | undefined;
+      let deadlineError = '';
       try { pickupDeadline = dateTimeToIso(pickupTime); }
-      catch (cause) { setError(cause instanceof Error ? cause.message : 'Choose a valid pickup date and time.'); return; }
-      if (!pickupDeadline) { setError('Choose a pickup date and time.'); return; }
+      catch (cause) { deadlineError = cause instanceof Error ? cause.message : 'Choose a valid pickup date and time.'; }
+      if (!pickupDeadline && !deadlineError) deadlineError = 'Choose a pickup date and time.';
+      if (pickupDeadline && Date.parse(pickupDeadline) <= Date.now()) deadlineError = 'Pickup deadline must be in the future.';
       const parsed = createListingSchema.safeParse({ ...fields, pickup_deadline: pickupDeadline, portions_total: Number(fields.portions_total), photo_path: photoPath, dietary_tags: tags, ingredients_notes: fields.ingredients_notes || null, allergen_notes: fields.allergen_notes || null });
-      if (!parsed.success) { setError(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(' · ')); return; }
-      if (Date.parse(parsed.data.pickup_deadline) <= Date.now()) { setError('Pickup deadline must be in the future.'); return; }
+      const errors: Record<string, string> = {};
+      if (!parsed.success) for (const issue of parsed.error.issues) {
+        const field = String(issue.path[0]);
+        errors[field] = `${fieldLabels[field] ?? 'Field'}: ${issue.code === 'too_small' || issue.code === 'invalid_format' ? 'Enter a valid value.' : issue.message}`;
+      }
+      if (deadlineError) errors.pickup_deadline = deadlineError;
+      if (Object.keys(errors).length) {
+        const order = ['title', 'description', 'portions_total', 'location_id', 'pickup_instructions', 'pickup_deadline', 'dietary_tags', 'ingredients_notes', 'allergen_notes', 'photo_path'];
+        invalid(Object.fromEntries(order.filter(field => errors[field]).map(field => [field, errors[field]]))); return;
+      }
+      if (!parsed.success) return;
       let path = photoPath;
-      if (photo && !path) { const body = new FormData(); body.set('photo', photo); path = (await api.uploadPhoto(body)).photo_path; setPhotoPath(path); }
+      if (photo && !path) { setStage('Uploading food photo…'); const body = new FormData(); body.set('photo', photo); path = (await api.uploadPhoto(body)).photo_path; setPhotoPath(path); }
+      setStage('Publishing listing…');
       const { listing } = await api.createListing({ ...parsed.data, photo_path: path }); router.push(`/manage/${listing.id}`);
-    } catch (e) { setError(message(e)); } finally { setBusy(false); }
+    } catch (e) { setError(message(e)); } finally { setStage(''); }
   }
   return <div className={styles.shareLayout}>
-    <form className={styles.form} onSubmit={publish}>
+    <form className={styles.form} onSubmit={publish} noValidate>
       <fieldset disabled={busy} className={styles.formBody}>
         <section className={styles.formSection} aria-labelledby="food-details-heading">
           <span className="section-kicker">01 · The food</span>
           <h2 id="food-details-heading">What are you sharing?</h2>
           <label htmlFor="title">Title</label>
-          <input id="title" required maxLength={160} placeholder="For example, leftover veggie sandwiches" value={fields.title} onChange={e => setFields({ ...fields, title: e.target.value })}/>
+          <input id="title" aria-invalid={Boolean(fieldErrors.title)} aria-describedby={fieldErrors.title ? "title-error" : undefined} required maxLength={160} placeholder="For example, leftover veggie sandwiches" value={fields.title} onChange={e => setFields({ ...fields, title: e.target.value })}/>
+          {fieldErrors.title && <p id="title-error" className="notice">{fieldErrors.title}</p>}
           <label htmlFor="description">Description</label>
-          <textarea id="description" required maxLength={4000} placeholder="Tell students what’s available." value={fields.description} onChange={e => setFields({ ...fields, description: e.target.value })}/>
+          <textarea id="description" aria-invalid={Boolean(fieldErrors.description)} aria-describedby={fieldErrors.description ? "description-error" : undefined} required maxLength={4000} placeholder="Tell students what’s available." value={fields.description} onChange={e => setFields({ ...fields, description: e.target.value })}/>
+          {fieldErrors.description && <p id="description-error" className="notice">{fieldErrors.description}</p>}
           <label htmlFor="portions_total">Number of portions</label>
-          <input className={styles.portions} id="portions_total" type="number" min={1} max={10000} required value={fields.portions_total} onChange={e => setFields({ ...fields, portions_total: e.target.value })}/>
+          <input className={styles.portions} id="portions_total" aria-invalid={Boolean(fieldErrors.portions_total)} aria-describedby={fieldErrors.portions_total ? "portions_total-error" : undefined} type="number" min={1} max={10000} required value={fields.portions_total} onChange={e => setFields({ ...fields, portions_total: e.target.value })}/>
+          {fieldErrors.portions_total && <p id="portions_total-error" className="notice">{fieldErrors.portions_total}</p>}
         </section>
         <section className={styles.formSection} aria-labelledby="pickup-details-heading">
           <span className="section-kicker">02 · The pickup</span>
           <h2 id="pickup-details-heading">Where and when?</h2>
           <label htmlFor="location">Campus location</label>
-          <select id="location" required value={fields.location_id} onChange={e => setFields({ ...fields, location_id: e.target.value })}>
+          <select id="location" aria-invalid={Boolean(fieldErrors.location_id)} aria-describedby={fieldErrors.location_id ? "location-error" : undefined} required value={fields.location_id} onChange={e => setFields({ ...fields, location_id: e.target.value })}>
             <option value="">Choose a campus landmark</option>{locations.map(location => <option key={location.id} value={location.id}>{location.name}</option>)}
           </select>
+          {fieldErrors.location_id && <p id="location-error" className="notice">{fieldErrors.location_id}</p>}
           {!loaded && <button type="button" className="button-secondary" onClick={() => void loadLocations()}>Reload locations</button>}
           {loaded && !locations.length && <p className="notice">No verified campus landmarks are configured. Ask the integration owner to set up locations before posting.</p>}
           <label htmlFor="pickup_instructions">Pickup instructions</label>
-          <textarea id="pickup_instructions" required maxLength={1000} placeholder="For example, meet at the front desk on the first floor." value={fields.pickup_instructions} onChange={e => setFields({ ...fields, pickup_instructions: e.target.value })}/>
-          <DateTimePicker id="pickup-deadline" label="Pickup deadline" value={pickupTime} onChange={setPickupTime} minDate={chicagoToday()} required/>
+          <textarea id="pickup_instructions" aria-invalid={Boolean(fieldErrors.pickup_instructions)} aria-describedby={fieldErrors.pickup_instructions ? "pickup_instructions-error" : undefined} required maxLength={1000} placeholder="For example, meet at the front desk on the first floor." value={fields.pickup_instructions} onChange={e => setFields({ ...fields, pickup_instructions: e.target.value })}/>
+          {fieldErrors.pickup_instructions && <p id="pickup_instructions-error" className="notice">{fieldErrors.pickup_instructions}</p>}
+          <div role="group" aria-describedby={fieldErrors.pickup_deadline ? "pickup-deadline-error" : undefined}><DateTimePicker id="pickup-deadline" label="Pickup deadline" value={pickupTime} onChange={setPickupTime} minDate={chicagoToday()} required/></div>
+          {fieldErrors.pickup_deadline && <p id="pickup-deadline-error" className="notice" role="alert">{fieldErrors.pickup_deadline}</p>}
           <p className={styles.help}>Choose a future deadline. Times use America/Chicago.</p>
         </section>
         <section className={styles.formSection} aria-labelledby="dietary-heading">
@@ -76,13 +103,15 @@ export function ListingForm() {
           <p className={styles.help}>Only select tags you can confirm. Leave them unchecked if you’re unsure.</p>
           <div className={styles.tags}>{dietaryTagSchema.options.map(tag => <label className={styles.tag} key={tag}><input type="checkbox" checked={tags.includes(tag)} onChange={e => setTags(e.target.checked ? [...tags, tag] : tags.filter(t => t !== tag))}/>{tag.replace('_', ' ')}</label>)}</div>
           <details className={styles.notes}><summary>Add ingredient or allergen notes <span>Optional</span></summary>
-            <label htmlFor="ingredients_notes">Ingredients notes</label><textarea id="ingredients_notes" maxLength={2000} value={fields.ingredients_notes} onChange={e => setFields({ ...fields, ingredients_notes: e.target.value })}/>
-            <label htmlFor="allergen_notes">Allergen notes</label><textarea id="allergen_notes" maxLength={2000} value={fields.allergen_notes} onChange={e => setFields({ ...fields, allergen_notes: e.target.value })}/>
+            <label htmlFor="ingredients_notes">Ingredients notes</label><textarea id="ingredients_notes" aria-invalid={Boolean(fieldErrors.ingredients_notes)} aria-describedby={fieldErrors.ingredients_notes ? "ingredients_notes-error" : undefined} maxLength={2000} value={fields.ingredients_notes} onChange={e => setFields({ ...fields, ingredients_notes: e.target.value })}/>
+          {fieldErrors.ingredients_notes && <p id="ingredients_notes-error" className="notice">{fieldErrors.ingredients_notes}</p>}
+            <label htmlFor="allergen_notes">Allergen notes</label><textarea id="allergen_notes" aria-invalid={Boolean(fieldErrors.allergen_notes)} aria-describedby={fieldErrors.allergen_notes ? "allergen_notes-error" : undefined} maxLength={2000} value={fields.allergen_notes} onChange={e => setFields({ ...fields, allergen_notes: e.target.value })}/>
+          {fieldErrors.allergen_notes && <p id="allergen_notes-error" className="notice">{fieldErrors.allergen_notes}</p>}
           </details>
         </section>
         <div className={styles.publish}><p>Review your details before sharing.</p><button disabled={!loaded || !locations.length}>Publish listing</button></div>
       </fieldset>
-      {busy && <p className="loading-state" role="status">Working…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
+      {busy && <p className="loading-state" role="status">{stage}</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
     </form>
     <aside className={styles.assistancePanel}>
       <span className="section-kicker">A little help</span><h2>Start with a photo</h2>

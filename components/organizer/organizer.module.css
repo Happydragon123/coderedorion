@@ -55,3 +55,7 @@
 .toolbar { padding: 1rem 0; border-bottom: 1px solid var(--line); }
 .back-link { font-size: .85rem; }
 @media (hover: hover) and (pointer: fine) { .listing h2 a:hover { color: var(--accent); text-decoration: underline; } }
+
+.closeDialog { width: min(480px, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; overflow-wrap: anywhere; padding: 1.5rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); }
+.closeDialog::backdrop { background: rgb(0 0 0 / .45); }
+.closeDialog h2 { margin-top: 0; }
