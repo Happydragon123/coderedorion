@@ -25,7 +25,7 @@ test('search uses caller origin and landmark and rejects invented IDs and extra 
   assert.deepEqual(groundedFilters({ origin_lat: 45, origin_lng: 40, max_distance_m: 500, dietary_tag: 'vegan' }, {query:'nearby',origin:{latitude:0,longitude:0},location_id:demoLocation.id}, [demoLocation]), { origin_lat:0,origin_lng:0,max_distance_m:500,dietary_tag:'vegan',location_id:demoLocation.id });
 });
 test('grounded summary reflects only returned inventory and stays within contract limits', () => {
-  assert.match(groundedSummary([]), /No available listings/);
+  assert.match(groundedSummary([]), /No matching food found/);
   const summary = groundedSummary([demoListing]);
   assert.ok(summary.includes(demoListing.id));
   assert.ok(summary.includes(`${demoListing.available_portions} available portions`));
@@ -33,4 +33,26 @@ test('grounded summary reflects only returned inventory and stays within contrac
 });
 test('Gemini schemas serialize without unrepresentable preprocessors', () => {
   for (const schema of [draftSchema, listingFiltersSchema]) assert.ok(z.toJSONSchema(schema, {io:'output'}));
+});
+
+test('relevance summary stays grounded and brief without clarification lectures', () => {
+  const pizza = { ...demoListing, title: 'Leftover Pizza Boxes', dietary_tags: [] };
+  const before = structuredClone(pizza);
+  const summary = groundedSummary([pizza]);
+  assert.match(summary, /1 possible food match based on listing titles and descriptions/);
+  assert.ok(summary.includes(pizza.id));
+  assert.doesNotMatch(summary, /healthy|clarif|nutrition|match the interpreted filters/i);
+  assert.deepEqual(pizza, before);
+  const empty = groundedSummary([]);
+  assert.match(empty, /No matching food found/);
+  assert.match(empty, /standard filters/);
+  assert.doesNotMatch(empty, /healthy|clarif|nutrition/i);
+});
+test('long relevant-inventory summaries remain within the response contract', () => {
+  const rows = Array.from({ length: 200 }, () => ({ ...demoListing, title: 'x'.repeat(160), location: { ...demoLocation, name: 'y'.repeat(120) } }));
+  const summary = groundedSummary(rows);
+  assert.ok(summary.length <= 2000);
+  assert.match(summary, /200 possible food matches/);
+  assert.ok(summary.includes(demoListing.id));
+  assert.ok(summary.endsWith('Review listing details and organizer-confirmed dietary information before reserving.'));
 });

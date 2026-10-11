@@ -15,13 +15,16 @@ export function groundedFilters(raw: unknown, request: SearchRequest, locations:
   return listingFiltersSchema.parse(filters);
 }
 export function groundedSummary(rows: Listing[]) {
-  if (!rows.length) return 'No available listings match the interpreted filters. Try standard filters or a broader query.';
-  // Deterministic prose prevents the model from inventing inventory or dietary claims.
+  // The model selects existing IDs only; summary facts come from retrieved rows.
+  const status = rows.length
+    ? `${rows.length} possible food match${rows.length === 1 ? '' : 'es'} based on listing titles and descriptions, within the applied filters.`
+    : 'No matching food found in the available listing titles and descriptions within the applied filters. Try another food request or browse with standard filters.';
+  const review = 'Review listing details and organizer-confirmed dietary information before reserving.';
   const entries: string[] = [];
   for (const row of rows) {
     const line = `${row.title} at ${row.location.name}: ${row.available_portions} available portions (listing ${row.id}).`;
-    if (entries.join(' ').length + line.length > 1650) break;
+    if ([status, ...entries, line, review].join(' ').length > 2000) break;
     entries.push(line);
   }
-  return `${rows.length} available listing${rows.length === 1 ? '' : 's'} match the interpreted filters. ${entries.join(' ')} Review the returned cards for deadlines and organizer-confirmed dietary details. Search supports location, one dietary tag, straight-line distance and pickup deadline; other preferences are not applied.`;
+  return [status, ...entries, review].join(' ');
 }

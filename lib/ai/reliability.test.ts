@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { demoListing, demoLocation } from '../fixtures';
 import { groundedSummary } from './policy';
+import { selectRelevant } from './relevance';
 import { interpret, interpretationKey, withLease, type InterpretationStore } from './reliability';
 import type { ListingFilters } from '../contracts';
 function store(): InterpretationStore {
@@ -19,7 +20,7 @@ test('cached interpretation avoids provider work while summaries reflect fresh i
   for (let i = 0; i < 2; i++) assert.deepEqual(await interpret({query:'vegan food'}, [demoLocation], 'model', shared, generate, busy), { dietary_tag: 'vegan' });
   assert.equal(calls, 1);
   assert.match(groundedSummary([{...demoListing,available_portions:1}]), /1 available portions/);
-  assert.match(groundedSummary([]), /No available listings/);
+  assert.match(groundedSummary([]), /No matching food found/);
 });
 test('identity includes caller origin, location, model, landmarks and policy; normalizes spaces', () => {
   const key = interpretationKey({query:'vegan food'}, [demoLocation], 'm');
@@ -55,4 +56,27 @@ test('leases release on success and failure, cooldown precedes release and stora
   const failure = new Error('provider quota');
   await assert.rejects(withLease(async()=>{throw failure;},async()=>{events.push('release');throw new Error('storage');},async()=>{events.push('cooldown');throw new Error('storage');}),error=>error===failure);
   assert.deepEqual(events,['cooldown','release']);
+});
+
+test('cached filters do not cache food relevance or stale listing selections', async () => {
+  // Deterministic test-only stubs, not Gemini behavior or production inventory.
+  const shared = store(); let interpretationCalls = 0; let relevanceCalls = 0;
+  const input = { query: 'creamy food' };
+  const alfredo = { ...demoListing, title: 'Alfredo pasta', description: 'Pasta with cream sauce.' };
+  for (const rows of [[alfredo], []]) {
+    const filters = await interpret(input, [demoLocation], 'm', shared, async () => { interpretationCalls++; return {}; }, busy);
+    assert.deepEqual(filters, {});
+    const matches = await selectRelevant(rows, input.query, async () => { relevanceCalls++; return { listing_ids: [alfredo.id] }; });
+    assert.deepEqual(matches, rows);
+    if (rows.length) assert.ok(groundedSummary(matches).includes(alfredo.id));
+    else assert.ok(!groundedSummary(matches).includes(alfredo.id));
+  }
+  assert.equal(interpretationCalls, 1);
+  assert.equal(relevanceCalls, 1); // Empty fresh inventory never reaches the provider.
+  const replacement = { ...alfredo, id: '00000000-0000-4000-8000-000000000098', title: 'Creamy mushroom soup' };
+  await interpret(input, [demoLocation], 'm', shared, async () => { throw new Error('Unexpected interpretation'); }, busy);
+  const matches = await selectRelevant([replacement], input.query, async () => { relevanceCalls++; return { listing_ids: [replacement.id] }; });
+  assert.equal(relevanceCalls, 2);
+  assert.deepEqual(matches, [replacement]);
+  assert.ok(!groundedSummary(matches).includes(alfredo.id));
 });

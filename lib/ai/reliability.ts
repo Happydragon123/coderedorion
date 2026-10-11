@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { ListingFilters, Location, SearchRequest } from '../contracts';
 import { groundedFilters } from './policy';
 
-export const SEARCH_POLICY_VERSION = 'search-v2-manual-pickup';
+export const SEARCH_POLICY_VERSION = 'search-v4-title-description-relevance';
 export function interpretationKey(input: SearchRequest, locations: Location[], model: string) {
   return createHash('sha256').update(JSON.stringify({
     query: input.query.normalize('NFKC').trim().replace(/\s+/g, ' '),

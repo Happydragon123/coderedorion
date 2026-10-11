@@ -2,7 +2,7 @@ import 'server-only';
 import { z } from 'zod';
 import { ApiError } from '@/lib/server/api';
 import { providerFailureMessage } from './provider-errors';
-export async function generate<T>(instructions: string, prompt: string, schema: z.ZodType<T>, photo?: Buffer): Promise<T> {
+export async function generate<T>(instructions: string, prompt: string, schema: z.ZodType<T>, photo?: Buffer, options: { timeoutMs?: number; maxOutputTokens?: number } = {}): Promise<T> {
   const key = process.env.GEMINI_API_KEY, model = process.env.GEMINI_MODEL;
   if (!key || !model) {
     const missing = [!key && 'GEMINI_API_KEY', !model && 'GEMINI_MODEL'].filter(Boolean);
@@ -13,8 +13,8 @@ export async function generate<T>(instructions: string, prompt: string, schema: 
   if (photo) parts.push({ inlineData: { mimeType: 'image/webp', data: photo.toString('base64') } });
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(45000),
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents: [{ role: 'user', parts }], generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(schema, { io: 'output' }) } }),
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(Math.max(1, Math.min(45000, options.timeoutMs ?? 45000))),
+      body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents: [{ role: 'user', parts }], generationConfig: { temperature: 0, maxOutputTokens: Math.max(1, Math.min(8192, options.maxOutputTokens ?? 8192)), responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(schema, { io: 'output' }) } }),
     });
     if (response.status === 429) throw new ApiError(429, 'RATE_LIMITED', 'Gemini quota is unavailable. Wait before trying again or use manual posting and standard filters.', { retryAfterSeconds: 3600, rateLimitSource: 'provider' });
     if (!response.ok) throw new ApiError(503, 'UPSTREAM_UNAVAILABLE', providerFailureMessage(response.status, await response.json().catch(() => null)));

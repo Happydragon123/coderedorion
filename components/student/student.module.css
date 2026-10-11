@@ -12,9 +12,18 @@
 .searchForm > p { max-width:80ch; }
 .filterPanel { margin:1rem 0 2rem; border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:.85rem 1.25rem; }
 .filterPanel summary { cursor:pointer; font-weight:600; font-size:.9rem; }
-.filters { max-width:none; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr)); gap:0 1.25rem; padding-top:.5rem; }
+.filters { max-width:none; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.25rem; padding-top:1.25rem; }
 .filters > div { min-width:0; }
-.filters .actions { align-self:end; padding-bottom:1rem; }
+.filters label { display:block; margin:0 0 .5rem; font-size:.8rem; font-weight:600; color:var(--muted); }
+.filters input,.filters select { margin:0; width:100%; min-height:44px; }
+.deadlineFilter { grid-column:1 / -1; padding:1rem; background:var(--surface-soft); border-radius:8px; }
+.deadlineHeading { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.5rem; margin-bottom:.8rem; }
+.deadlineHeading span { font-size:.9rem; font-weight:600; }
+.student .clearDeadline { margin:0; padding:.25rem .5rem; min-height:36px; background:transparent; color:var(--accent); font-size:.8rem; border:0; }
+.deadlineControls { display:grid; grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)); gap:.75rem; }
+.deadlineControls > div { min-width:0; }
+.filterActions { grid-column:1 / -1; border-top:1px solid var(--line); padding-top:1rem; display:flex; justify-content:flex-end; }
+.filterActions button { margin:0; }
 .student select,.student input { min-width:0; max-width:100%; }
 .student button,.student a { max-width:100%; }
 .results { margin-top:2rem; }
@@ -69,7 +78,11 @@
 }
 @media (max-width:600px) {
   .card,.detailPanel { padding:1.25rem; }
-  .filterPanel { padding:.8rem 1rem; }
+  .filterPanel { padding:1rem; }
+  .filters { grid-template-columns:1fr; gap:1rem; }
+  .deadlineControls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .deadlineControls > div:first-child { grid-column:1 / -1; }
+  .filterActions button { width:100%; }
   .impactGrid { grid-template-columns:1fr; }
   .impactPrimary { grid-row:auto; padding:1.5rem; }
   .detailPanel dl { grid-template-columns:1fr; gap:.35rem; }
