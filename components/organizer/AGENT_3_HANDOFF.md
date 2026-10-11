@@ -50,3 +50,9 @@ The HTTP script closes its demo listing and signs out its local test sessions in
 - Pickup deadline input currently requires an offset ISO timestamp. Display uses America/Chicago; a friendlier timezone-aware picker can follow without changing contracts.
 - Search supports one dietary tag, location, straight-line radius with caller origin and pickup-before. Unsupported preferences are disclosed and not guaranteed. Standard student filters remain available.
 - Browser interaction/accessibility rehearsal, photo attachment read/preview authorization with both accounts, provider outage/rate-limit injection and hosted verification remain to be performed by integration. No deployment or shared-file changes were made.
+
+## Constrained campus-time picker (2026-10-10)
+
+Replaced the raw ISO deadline field with Agent 0's shared calendar and hour/minute/AM-PM selectors, explicitly America/Chicago. Organizer publication converts the complete selection to UTC and retains future-deadline validation; applying an AI draft resets the operational deadline for manual confirmation. Agent 2 uses the same optional picker for student filters. No migrations, dependencies or contract changes.
+
+Integrated lint, typecheck, tests (22 passed, 3 opt-in live suites skipped), and production build passed. Focused authenticated Chrome verification covers 320/390/768 layouts, incomplete student selection, clear filter, Chicago conversion from a Tokyo device timezone, and exact persisted organizer deadline. Disposable verification listings are closed immediately. Shared helper tests cover DST gaps/folds, calendar validity, noon/midnight and winter/summer offsets. This supersedes the raw ISO picker limitation above.
