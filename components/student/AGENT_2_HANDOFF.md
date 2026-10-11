@@ -1,5 +1,9 @@
 # Agent 2 student interface handoff
 
+## Student visual refresh — 2026-10-10
+
+Search is the primary feed action, with optional exact filters inside an accessible collapsed disclosure. Map controls appear only when an authorized tile URL and attribution are configured; food cards and directions remain the default. Warm ivory cards, sage search panel, status chips and restrained borders improve hierarchy across food details, pickups and impact without changing endpoint/auth behavior, dietary uncertainty, private codes or Chicago deadline controls. Lint, typecheck, 22 tests (three live suites skipped), and production build passed. Hosted visual/browser acceptance remains integration-owned.
+
 ## Controlled deadline filter — 2026-10-10
 
 The optional pickup-before filter uses the shared calendar date and hour/minute/AM-PM selectors in America/Chicago. Clear removes the deadline filter on the next Apply filters action. Incomplete, invalid and ambiguous/nonexistent daylight-saving selections display a friendly error and preserve current results. No endpoint or contract changed. Lint, typecheck, 22 tests (three opt-in live suites skipped) and production build passed; browser acceptance is performed by the integration owner.
