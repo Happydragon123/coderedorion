@@ -1,6 +1,8 @@
 # Project completion priorities
 
-Reviewed October 10, 2026. Work top to bottom within each priority group. All six original requests are retained and marked **Original**; **Added** items come from inspecting the current implementation and the existing verification reports. Code findings are not claims that every failure has been reproduced in a new browser session.
+Reviewed October 10, 2026. Work top to bottom within each priority group. Unresolved original requests are marked **Original**; **Added** items come from inspecting the current implementation and the existing verification reports. Completed items are removed from this active backlog. Code findings are not claims that every failure has been reproduced in a new browser session.
+
+The home-page map (Original #6, formerly item 14) is implemented locally and removed from the active issues: visible red pickup pins for guests, live availability for signed-in users, grouped food previews, directions, and an attributed campus basemap without POI icons or road shields. Hosted deployment and browser checks for desktop/mobile, keyboard/touch interaction and recovery states remain in the completion gate below. Other issue numbers are preserved for existing references.
 
 **P1:** complete account access and make food handoffs dependable. **P2:** complete everyday management and interaction details. **P3:** expand discovery and finish presentation. No new critical security failure was established by this review.
 
@@ -118,16 +120,6 @@ AI Search remains enabled while a request is loading, so repeated submissions ca
 Evidence: `components/student/food-feed.tsx`.
 
 ## P3 — Expand discovery and finish presentation
-
-### 14. Add the interactive home-page availability map — Original #6
-
-Show real available food as dots at verified landmarks, with a preview on hover/focus and a route to listing details. On touch devices use tap previews. Multiple listings at one landmark need a picker rather than overlapping indistinguishable dots.
-
-There is already a reusable Leaflet map in the feed, but it uses click popups and is not on the home page. Maps were deliberately disabled for the previous demo; their absence is a requested feature change, not a newly discovered regression. All listing APIs currently require authentication, while Home is public.
-
-**Done when:** a permitted tile provider and attribution are configured; signed-in users see live inventory; the guest experience is explicitly designed without bypassing existing auth; keyboard/touch navigation and empty/loading/tile-failure states work. Keep an accessible food list and directions fallback. Public inventory access, if desired, needs a separately reviewed contract/security decision.
-
-Evidence: `components/map/food-map.tsx`, `app/page.tsx`, `README.md`, `docs/contracts.md`.
 
 ### 15. Separate demo evidence from real impact — Added
 

@@ -1,13 +1,12 @@
-import Image from 'next/image';
 import Link from 'next/link';
-import foodPhoto from '@/catered_food.webp';
+import { CampusPickupMap } from '@/components/home/campus-pickup-map';
 import { supabaseConfig, missingSupabaseMessage } from '@/lib/supabase/config';
 
 export default function Home() {
   return <>
     <section className="home-hero" aria-labelledby="home-title">
       <div className="hero-copy"><p className="eyebrow">Good food. Shared locally.</p><h1 id="home-title">Another portion.<br/><em>Another possibility.</em></h1><p className="hero-description">Connect surplus food with someone nearby. Share what you have, find a campus pickup, and make good food go further.</p><div className="hero-actions"><Link className="button" href="/listings">Find food nearby <span aria-hidden="true">↗</span></Link><Link className="hero-link" href="/share">Share surplus food <span aria-hidden="true">→</span></Link></div><p className="hero-note">Shared on campus. Reserved one portion at a time.</p></div>
-      <figure className="hero-photo"><Image src={foodPhoto} alt="Trays of catered food set out for sharing" priority sizes="(max-width: 760px) 100vw, 45vw"/><figcaption><span className="photo-caption-label">A place at the table</span>Good food deserves to be shared.</figcaption></figure>
+      <CampusPickupMap/>
     </section>
     {!supabaseConfig() && <p className="notice">{missingSupabaseMessage}</p>}
     <section className="home-how" aria-labelledby="how-title"><div className="home-how-heading"><p className="eyebrow">From extra to enjoyed</p><h2 id="how-title">A small act.<br/>A good next step.</h2><p>Make sharing part of campus life.</p></div><div className="home-steps">
