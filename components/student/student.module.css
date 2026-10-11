@@ -70,6 +70,9 @@
 .impactPrimary h2 { font-family:var(--display-font); font-size:2rem; font-weight:400; }
 .impactSecondary { padding:1.5rem; }
 .impactSecondary .stat { font-size:2.75rem; margin:.3rem 0; }
+.impactMethod { margin-top:1.25rem; padding:1rem 1.25rem; border:1px solid var(--line); border-radius:12px; background:var(--surface); color:var(--muted); font-size:.9rem; }
+.impactMethod summary { cursor:pointer; color:var(--ink); font-weight:600; }
+.impactMethod p { max-width:75ch; }
 .backLink { display:inline-block; font-size:.85rem; margin-bottom:1.25rem; }
 @media (hover:hover) and (pointer:fine) {
   .nav a:hover { background:var(--surface-soft); }
