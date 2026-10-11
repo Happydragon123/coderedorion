@@ -6,6 +6,7 @@ export const dietaryTagSchema = z.enum(['vegetarian', 'vegan', 'halal', 'gluten_
 // Only manually verified Google Maps links; coordinates remain independently verified.
 export const googleMapsUrlSchema = z.string().min(1).max(2048).refine(value => {
   if (/[\u0000-\u0020\u007f\\]/.test(value) || /%(?:0[0-9a-f]|1[0-9a-f]|7f)/i.test(value)) return false;
+  if (/\s/.test(value) || /\/(?:\.|%2e)(?:\.|%2e)?(?:\/|$)/i.test(value.split(/[?#]/, 1)[0])) return false;
   const authority = /^https:\/\/([^/?#]+)(?:[/?#]|$)/.exec(value)?.[1];
   if (!authority || !['maps.app.goo.gl', 'goo.gl', 'www.google.com', 'google.com', 'maps.google.com'].includes(authority)) return false;
   try {
