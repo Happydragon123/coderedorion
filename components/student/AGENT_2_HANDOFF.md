@@ -1,5 +1,13 @@
 # Agent 2 student interface handoff
 
+## Final readiness static audit — 2026-10-10
+
+Student content now wraps long organizer-provided text, and filters/native controls fit narrow containers. These protections are scoped to the student CSS module; shared styles, contracts, configuration and dependencies are unchanged.
+
+Static review confirms geolocation errors leave manual landmark and origin selectors enabled, map pins use latitude/longitude order and group by landmark, and both map view and tile-error states retain food cards and external directions. No provider is enabled without both the configured tile URL and attribution. This review does not establish browser geolocation-denial behavior or authorized provider rendering; the integration owner is performing browser checks separately. Tile configuration remains required before hosted provider/pin/attribution acceptance.
+
+Validation: lint, typecheck, 19 unit tests (three opt-in live suites skipped), and production build passed. No live provider calls or inventory mutations were made for this CSS change.
+
 Original branch: `agent-2-student-interface`. Search follow-up branch: `agent-2-natural-language-search`. Changes are restricted to `app/(student)`, `components/student`, `components/map`, and `lib/geo.ts`. No dependencies, contracts, migrations, shared navigation/styles, or environment files were changed. The group layout calls `requirePageUser`; APIs continue to authorize every request independently.
 
 ## Delivered
