@@ -43,5 +43,60 @@ export function ListingForm() {
       const { listing } = await api.createListing({ ...parsed.data, photo_path: path }); router.push(`/manage/${listing.id}`);
     } catch (e) { setError(message(e)); } finally { setBusy(false); }
   }
-  return <><section className="panel"><h2>Optional photo assistance</h2><label htmlFor="photo">Photo (JPEG, PNG or WebP, up to 5 MiB)</label><input id="photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { const file = e.target.files?.[0]; setPhotoPath(null); setPhoto(undefined); setPreview(''); if (file && !photoFileSchema.safeParse(file).success) { setError('Choose a JPEG, PNG or WebP image up to 5 MiB.'); e.target.value = ''; } else { setPhoto(file); setPreview(file ? URL.createObjectURL(file) : ''); setError(''); } }}/>{preview && <Image unoptimized width={600} height={300} className={styles.preview} src={preview} alt="Selected food photo preview"/>}<label htmlFor="ai-description">Description for Gemini</label><textarea className={styles.assistance} id="ai-description" maxLength={10000} value={hint} disabled={busy} onChange={e => setHint(e.target.value)}/><p>Generating a draft sends this photo and description to Gemini and replaces form fields. It does not publish. Unknown safety and dietary details stay unconfirmed.</p><button type="button" onClick={() => void draft()} disabled={busy || !(photo || hint.trim())}>Generate editable draft</button></section><form className={styles.form} onSubmit={publish}><fieldset disabled={busy}><legend>Listing details</legend><label htmlFor="location">Campus location</label><select id="location" required value={fields.location_id} onChange={e => setFields({ ...fields, location_id: e.target.value })}><option value="">Choose a verified landmark</option>{locations.map(location => <option key={location.id} value={location.id}>{location.name}</option>)}</select>{!loaded && <button type="button" onClick={() => void loadLocations()}>Reload locations</button>}{loaded && !locations.length && <p className="notice">No verified campus landmarks are configured. Ask the integration owner to set up locations before posting.</p>}{(['title','description','portions_total','pickup_instructions','pickup_deadline','ingredients_notes','allergen_notes'] as const).map(key => <div key={key}>{key === 'pickup_deadline' ? <DateTimePicker id="pickup-deadline" label="Pickup deadline" value={pickupTime} onChange={setPickupTime} minDate={chicagoToday()} required/> : <><label htmlFor={key}>{({ title:'Title',description:'Description',portions_total:'Number of portions',pickup_instructions:'Pickup instructions',pickup_deadline:'Pickup deadline',ingredients_notes:'Ingredients notes (optional)',allergen_notes:'Allergen notes (optional)' })[key]}</label>{['description','pickup_instructions','ingredients_notes','allergen_notes'].includes(key) ? <textarea id={key} required={key === 'description' || key === 'pickup_instructions'} maxLength={key === 'description' ? 4000 : key === 'pickup_instructions' ? 1000 : 2000} value={fields[key]} onChange={e => setFields({ ...fields, [key]: e.target.value })}/> : <input id={key} type={key === 'portions_total' ? 'number' : 'text'} min={key === 'portions_total' ? 1 : undefined} max={key === 'portions_total' ? 10000 : undefined} maxLength={key === 'title' ? 160 : undefined} required value={fields[key]} onChange={e => setFields({ ...fields, [key]: e.target.value })}/>}</>}</div>)}<p>Choose a future pickup deadline.</p><fieldset><legend>Dietary tags you confirm (leave unchecked if unknown)</legend>{dietaryTagSchema.options.map(tag => <label key={tag}><input type="checkbox" checked={tags.includes(tag)} onChange={e => setTags(e.target.checked ? [...tags, tag] : tags.filter(t => t !== tag))}/>{tag.replace('_',' ')}</label>)}</fieldset><button disabled={!loaded || !locations.length}>Publish listing</button></fieldset></form>{busy && <p role="status">Working…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}</>;
+  return <div className={styles.shareLayout}>
+    <form className={styles.form} onSubmit={publish}>
+      <fieldset disabled={busy} className={styles.formBody}>
+        <section className={styles.formSection} aria-labelledby="food-details-heading">
+          <span className="section-kicker">01 · The food</span>
+          <h2 id="food-details-heading">What are you sharing?</h2>
+          <label htmlFor="title">Title</label>
+          <input id="title" required maxLength={160} placeholder="For example, leftover veggie sandwiches" value={fields.title} onChange={e => setFields({ ...fields, title: e.target.value })}/>
+          <label htmlFor="description">Description</label>
+          <textarea id="description" required maxLength={4000} placeholder="Tell students what’s available." value={fields.description} onChange={e => setFields({ ...fields, description: e.target.value })}/>
+          <label htmlFor="portions_total">Number of portions</label>
+          <input className={styles.portions} id="portions_total" type="number" min={1} max={10000} required value={fields.portions_total} onChange={e => setFields({ ...fields, portions_total: e.target.value })}/>
+        </section>
+        <section className={styles.formSection} aria-labelledby="pickup-details-heading">
+          <span className="section-kicker">02 · The pickup</span>
+          <h2 id="pickup-details-heading">Where and when?</h2>
+          <label htmlFor="location">Campus location</label>
+          <select id="location" required value={fields.location_id} onChange={e => setFields({ ...fields, location_id: e.target.value })}>
+            <option value="">Choose a campus landmark</option>{locations.map(location => <option key={location.id} value={location.id}>{location.name}</option>)}
+          </select>
+          {!loaded && <button type="button" className="button-secondary" onClick={() => void loadLocations()}>Reload locations</button>}
+          {loaded && !locations.length && <p className="notice">No verified campus landmarks are configured. Ask the integration owner to set up locations before posting.</p>}
+          <label htmlFor="pickup_instructions">Pickup instructions</label>
+          <textarea id="pickup_instructions" required maxLength={1000} placeholder="For example, meet at the front desk on the first floor." value={fields.pickup_instructions} onChange={e => setFields({ ...fields, pickup_instructions: e.target.value })}/>
+          <DateTimePicker id="pickup-deadline" label="Pickup deadline" value={pickupTime} onChange={setPickupTime} minDate={chicagoToday()} required/>
+          <p className={styles.help}>Choose a future deadline. Times use America/Chicago.</p>
+        </section>
+        <section className={styles.formSection} aria-labelledby="dietary-heading">
+          <span className="section-kicker">03 · Helpful details</span>
+          <h2 id="dietary-heading">Dietary information</h2>
+          <p className={styles.help}>Only select tags you can confirm. Leave them unchecked if you’re unsure.</p>
+          <div className={styles.tags}>{dietaryTagSchema.options.map(tag => <label className={styles.tag} key={tag}><input type="checkbox" checked={tags.includes(tag)} onChange={e => setTags(e.target.checked ? [...tags, tag] : tags.filter(t => t !== tag))}/>{tag.replace('_', ' ')}</label>)}</div>
+          <details className={styles.notes}><summary>Add ingredient or allergen notes <span>Optional</span></summary>
+            <label htmlFor="ingredients_notes">Ingredients notes</label><textarea id="ingredients_notes" maxLength={2000} value={fields.ingredients_notes} onChange={e => setFields({ ...fields, ingredients_notes: e.target.value })}/>
+            <label htmlFor="allergen_notes">Allergen notes</label><textarea id="allergen_notes" maxLength={2000} value={fields.allergen_notes} onChange={e => setFields({ ...fields, allergen_notes: e.target.value })}/>
+          </details>
+        </section>
+        <div className={styles.publish}><p>Review your details before sharing.</p><button disabled={!loaded || !locations.length}>Publish listing</button></div>
+      </fieldset>
+      {busy && <p role="status">Working…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
+    </form>
+    <aside className={styles.assistancePanel}>
+      <span className="section-kicker">A little help</span><h2>Start with a photo</h2>
+      <p>Attach a photo, or let Gemini help write an editable draft.</p>
+      <label htmlFor="photo">Food photo <span className={styles.optional}>Optional</span></label>
+      <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { const file = e.target.files?.[0]; setPhotoPath(null); setPhoto(undefined); setPreview(''); if (file && !photoFileSchema.safeParse(file).success) { setError('Choose a JPEG, PNG or WebP image up to 5 MiB.'); e.target.value = ''; } else { setPhoto(file); setPreview(file ? URL.createObjectURL(file) : ''); setError(''); } }}/>
+      <p className={styles.help}>JPEG, PNG or WebP · Up to 5 MiB</p>
+      {preview && <Image unoptimized width={600} height={300} className={styles.preview} src={preview} alt="Selected food photo preview"/>}
+      <details className={styles.notes}><summary>Draft with Gemini</summary>
+        <label htmlFor="ai-description">What’s in the photo?</label><textarea className={styles.assistance} id="ai-description" maxLength={10000} value={hint} disabled={busy} placeholder="Describe the food you’re sharing." onChange={e => setHint(e.target.value)}/>
+        <p className={styles.help}>Your photo and description are sent to Gemini. A draft replaces form fields; review every detail. Dietary and safety information stays unconfirmed.</p>
+        <button className="button-secondary" type="button" onClick={() => void draft()} disabled={busy || !(photo || hint.trim())}>Generate editable draft</button>
+      </details>
+      <div className={styles.tip}><h3>Share with care</h3><p>Give clear pickup instructions, confirm dietary details, and keep existing pickups available until the deadline.</p></div>
+    </aside>
+  </div>;
 }

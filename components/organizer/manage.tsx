@@ -28,5 +28,22 @@ export function ManageListings({ listingId }: { listingId?: string }) {
     } catch (e) { setError(message(e)); await refresh(); setError(message(e)); } finally { setBusy(false); }
   }
   const selected = listingId ? rows.filter(row => row.id === listingId) : rows;
-  return <><p>Closing stops new reservations. Honor existing pickups until the deadline.</p><button onClick={() => void refresh()} disabled={loading || busy}>Refresh</button>{loading && <p role="status">Loading your listings…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}{!loading && !error && !selected.length && <p>{listingId ? 'This listing is unavailable or is not owned by your account.' : 'You have no listings yet.'} <Link href="/share">Share food</Link></p>}{selected.map(row => <article className={`panel ${styles.listing}`} key={row.id}><h2><Link href={`/manage/${row.id}`}>{row.title}</Link></h2><p>{row.location.name} · {row.status} · {row.available_portions} available of {row.portions_total} posted</p><p>Pickup by {deadline(row.pickup_deadline)} (America/Chicago)</p><p>{row.pickup_instructions}</p><div className={styles.actions}>{row.status === 'open' && <button disabled={busy} onClick={() => void act(row, false)}>Close listing</button>}</div>{listingId && <form className={styles.form} onSubmit={e => { e.preventDefault(); void act(row, true); }}><label htmlFor="pickup-code">Student pickup code</label><input id="pickup-code" value={code} onChange={e => setCode(e.target.value)} required maxLength={32} autoComplete="off"/><button disabled={busy || !code.trim() || Date.parse(row.pickup_deadline) <= now}>Confirm collection</button><p>Confirm only after handing over one portion. Repeated confirmation never counts twice.</p></form>}</article>)}</>;
+  return <>
+    <div className={styles.toolbar}><p>Closing stops new reservations. Existing pickups stay valid until the deadline.</p><button className="button-secondary" onClick={() => void refresh()} disabled={loading || busy}>Refresh</button></div>
+    {loading && <p role="status">Loading your listings…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p className="notice" role="status">{notice}</p>}
+    {!loading && !error && !selected.length && <div className="empty-state"><h2>{listingId ? 'Listing unavailable' : 'Ready to share something?'}</h2><p>{listingId ? 'This listing is unavailable or is not owned by your account.' : 'Your shared food will appear here, ready for you to manage pickups.'}</p><Link className="button" href="/share">Share food</Link></div>}
+    <div className={styles.listings}>{selected.map(row => <article className={styles.listing} key={row.id}>
+      <span className={`${styles.status} ${row.status === 'closed' ? styles.statusClosed : ''}`}>{Date.parse(row.pickup_deadline) <= now ? 'Expired' : row.status}</span>
+      <h2><Link href={`/manage/${row.id}`}>{row.title}</Link></h2>
+      <p className={styles.metadata}>{row.location.name}</p>
+      <div className={styles.count}><strong>{row.available_portions}</strong> available <span className="muted">of {row.portions_total} portions posted</span></div>
+      <p className={styles.metadata}>Pickup by {deadline(row.pickup_deadline)} (America/Chicago)</p>
+      {listingId && <p>{row.pickup_instructions}</p>}
+      <div className={styles.actions}>{!listingId && <Link className="button button-secondary" href={`/manage/${row.id}`}>Manage pickup</Link>}{row.status === 'open' && <button className="button-secondary" disabled={busy} onClick={() => void act(row, false)}>Close listing</button>}</div>
+      {listingId && <form className={styles.collection} onSubmit={e => { e.preventDefault(); void act(row, true); }}>
+        <h3>Confirm a pickup</h3><label htmlFor="pickup-code">Student pickup code</label><input id="pickup-code" value={code} onChange={e => setCode(e.target.value)} required maxLength={32} autoComplete="off" placeholder="Enter the student’s code"/>
+        <button disabled={busy || !code.trim() || Date.parse(row.pickup_deadline) <= now}>Confirm collection</button><p className={styles.help}>Confirm after handing over one portion. Each collection counts once.</p>
+      </form>}
+    </article>)}</div>
+  </>;
 }
