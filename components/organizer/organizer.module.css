@@ -8,3 +8,7 @@
 .actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
 
 .assistance { width: 100%; min-height: 100px; font: inherit; padding: .75rem; }
+
+.listing { min-width: 0; overflow-wrap: anywhere; }
+.form, .form fieldset { min-width: 0; }
+.form input, .form select, .form textarea { min-width: 0; max-width: 100%; }
