@@ -42,7 +42,15 @@ async function main() {
     const {locations}=await checked(await organizer.send('/api/locations'),c.locationsResponseSchema);
     const location=locations.find(row=>row.name==='Student Center South');
     assert.ok(location,'Existing verified Student Center South landmark is required');
-    const payload:c.CreateListing={location_id:location.id,title:'DEMO — manual flow rehearsal',description:'Dummy integration test data. No real food or pickup.',photo_path:null,portions_total:1,pickup_instructions:'Dummy pickup at Student Center South. Test only.',pickup_deadline:new Date(Date.now()+7200000).toISOString(),dietary_tags:[],ingredients_notes:null,allergen_notes:null};
+    const upload=new FormData();upload.set('photo',photo);
+    const {photo_path}=await checked(await organizer.send('/api/uploads/photo','POST',upload),c.photoResponseSchema,201);
+    const premature=await student.db.storage.from('food-photos').createSignedUrl(photo_path,60);
+    assert.ok(premature.error,'Unattached organizer photo must be private');
+    const ownerPreview=await organizer.db.storage.from('food-photos').createSignedUrl(photo_path,60);
+    assert.ok(!ownerPreview.error && ownerPreview.data?.signedUrl,'Owner draft preview failed');
+    console.log('PASS photo: supplied catered_food.webp uploaded; owner preview allowed and student access denied before attachment.');
+
+    const payload:c.CreateListing={location_id:location.id,title:'DEMO — manual flow rehearsal',description:'Dummy integration test data. No real food or pickup.',photo_path,portions_total:1,pickup_instructions:'Dummy pickup at Student Center South. Test only.',pickup_deadline:new Date(Date.now()+7200000).toISOString(),dietary_tags:[],ingredients_notes:null,allergen_notes:null};
     const baseline=await checked(await organizer.send('/api/impact'),c.impactSchema);
     const create=async (body:c.CreateListing) => { const {listing}=await checked(await organizer.send('/api/listings','POST',body),c.listingResponseSchema,201); ids.push(listing.id); return listing; };
     const reserve=async (listing:c.Listing) => { const {reservation}=await checked(await student.send(`/api/listings/${listing.id}/reservations`,'POST'),c.reservationResponseSchema,201); reservations.push({id:reservation.id,client:student}); return reservation; };
@@ -82,14 +90,6 @@ async function main() {
       console.log('PASS fallback: full manual lifecycle works while Gemini configuration is absent; AI reports configuration missing.');
       return;
     }
-
-    const upload=new FormData();upload.set('photo',photo);
-    const {photo_path}=await checked(await organizer.send('/api/uploads/photo','POST',upload),c.photoResponseSchema,201);
-    const premature=await student.db.storage.from('food-photos').createSignedUrl(photo_path,60);
-    assert.ok(premature.error,'Unattached organizer photo must be private');
-    const ownerPreview=await organizer.db.storage.from('food-photos').createSignedUrl(photo_path,60);
-    assert.ok(!ownerPreview.error && ownerPreview.data?.signedUrl,'Owner draft preview failed');
-    console.log('PASS photo: supplied catered_food.webp uploaded; owner preview allowed and student access denied before attachment.');
 
     const form=new FormData();form.set('photo',photo);form.set('description','Dummy demo photo. Title: DEMO catered food. Count, landmark, instructions and deadline are unknown. Do not make dietary or allergen claims.');
     await paceAi();

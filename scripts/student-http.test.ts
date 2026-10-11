@@ -7,7 +7,7 @@ import * as c from '../lib/contracts';
 // Explicit opt-in: uses real cookie-authenticated HTTP and leaves labeled demo records.
 const enabled = process.env.FOOD_HTTP_TEST_RUN === '1';
 test('student HTTP flow: cookie auth, filters, 409, private pickups, cancellation and collection', { skip: !enabled }, async () => {
-  const names = ['FOOD_HTTP_TEST_BASE_URL', 'FOOD_TEST_URL', 'FOOD_TEST_KEY', 'FOOD_TEST_ORGANIZER_EMAIL', 'FOOD_TEST_ORGANIZER_PASSWORD', 'FOOD_TEST_STUDENT_EMAIL', 'FOOD_TEST_STUDENT_PASSWORD'];
+  const names = ['FOOD_HTTP_TEST_BASE_URL', 'FOOD_TEST_URL', 'FOOD_TEST_KEY', 'FOOD_TEST_ORGANIZER_EMAIL', 'FOOD_TEST_ORGANIZER_PASSWORD', 'FOOD_TEST_STUDENT_EMAIL', 'FOOD_TEST_STUDENT_PASSWORD', 'FOOD_TEST_PHOTO_PATH'];
   assert.deepEqual(names.filter(name => !process.env[name]), [], 'Missing HTTP test configuration');
   const base = process.env.FOOD_HTTP_TEST_BASE_URL!;
   const account = async (role: 'ORGANIZER' | 'STUDENT') => {
@@ -42,7 +42,7 @@ test('student HTTP flow: cookie auth, filters, 409, private pickups, cancellatio
     assert.ok(location, 'Provide a verified landmark before running the HTTP suite');
     const baseline = await checked(await organizer.send('/api/impact'), c.impactSchema);
     const { listing } = await checked(await organizer.send('/api/listings', 'POST', {
-      location_id: location.id, title: 'DEMO — student HTTP integration test', description: 'Disposable test inventory; no real food or pickup.', photo_path: null, portions_total: 1,
+      location_id: location.id, title: 'DEMO — student HTTP integration test', description: 'Disposable test inventory; no real food or pickup.', photo_path: c.photoAttachmentSchema.parse(process.env.FOOD_TEST_PHOTO_PATH), portions_total: 1,
       pickup_instructions: 'Demo only', pickup_deadline: new Date(Date.now() + 3600000).toISOString(), dietary_tags: ['vegetarian'], ingredients_notes: null, allergen_notes: null,
     }), c.listingResponseSchema, 201);
     listingId = listing.id;

@@ -33,9 +33,13 @@ const listingFields = {
   dietary_tags: z.array(dietaryTagSchema).max(4).refine(v => new Set(v).size === v.length, 'Duplicate dietary tags'),
   ingredients_notes: z.string().max(2000).nullable(), allergen_notes: z.string().max(2000).nullable(),
 };
-export const createListingSchema = z.object(listingFields).strict();
-export const patchListingSchema = createListingSchema.partial().extend({ status: z.enum(['open', 'closed']).optional() }).strict().refine(v => Object.keys(v).length > 0, 'Provide at least one field');
-export const listingSchema = createListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema, location: locationSchema, available_portions: z.number().int().nonnegative(), distance_m: z.number().nonnegative().optional(), sharer: sharingIdentitySchema.optional() }).strict();
+// Creation is stricter than historical DTOs, drafts and PATCH inputs.
+export const photoAttachmentSchema = z.string().max(512).regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.(?:webp|png|jpg|jpeg)$/, 'Use a successfully uploaded food photo.');
+export const listingDetailsSchema = z.object(listingFields).omit({ photo_path: true }).strict();
+const legacyListingSchema = z.object(listingFields).strict();
+export const createListingSchema = legacyListingSchema.extend({ photo_path: photoAttachmentSchema });
+export const patchListingSchema = legacyListingSchema.partial().extend({ status: z.enum(['open', 'closed']).optional() }).strict().refine(v => Object.keys(v).length > 0, 'Provide at least one field');
+export const listingSchema = legacyListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema, location: locationSchema, available_portions: z.number().int().nonnegative(), distance_m: z.number().nonnegative().optional(), sharer: sharingIdentitySchema.optional() }).strict();
 export const reservationSchema = z.object({ id: idSchema, listing_id: idSchema, student_id: idSchema, pickup_code: z.string().min(1).max(32), status: z.enum(['reserved', 'collected', 'cancelled', 'expired']), created_at: timestampSchema, collected_at: timestampSchema.nullable() }).strict();
 // Private context for the verified caller; never add this to public Listing DTOs.
 export const pickupContextResponseSchema = z.object({ is_owner: z.boolean(), reservation: reservationSchema.nullable() }).strict();
@@ -58,7 +62,7 @@ export const listingsResponseSchema = z.object({ listings: z.array(listingSchema
 export const listingResponseSchema = z.object({ listing: listingSchema }).strict();
 export const reservationResponseSchema = z.object({ reservation: reservationSchema }).strict();
 export const reservationsResponseSchema = z.object({ reservations: z.array(reservationSchema) }).strict();
-export const photoResponseSchema = z.object({ photo_path: z.string().min(1).max(512) }).strict();
+export const photoResponseSchema = z.object({ photo_path: photoAttachmentSchema }).strict();
 export const searchResponseSchema = z.object({ filters: listingFiltersSchema, listings: z.array(listingSchema), summary: z.string().max(2000) }).strict();
 export const MEDIA_LIMITS = { photoBytes: 5 * 1024 * 1024, photoMimeTypes: ['image/jpeg','image/png','image/webp'] } as const;
 export type Location = z.infer<typeof locationSchema>;
@@ -76,8 +80,8 @@ export type Impact = z.infer<typeof impactSchema>;
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 
 // Metadata checks are a first pass; endpoint owners must inspect/decode content too.
-export const photoFileSchema = z.file().max(MEDIA_LIMITS.photoBytes).mime([...MEDIA_LIMITS.photoMimeTypes]);
+export const photoFileSchema = z.file().min(1).max(MEDIA_LIMITS.photoBytes).mime([...MEDIA_LIMITS.photoMimeTypes]);
 export const photoUploadRequestSchema = z.object({ photo: photoFileSchema }).strict();
 export const draftRequestSchema = z.object({ photo: photoFileSchema.optional(), description: z.string().trim().max(10000).optional() }).strict().refine(v => Boolean(v.photo || v.description), 'Provide a photo or description');
-export const listingRowSchema = createListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema }).strict();
+export const listingRowSchema = legacyListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema }).strict();
 export type ListingRow = z.infer<typeof listingRowSchema>;

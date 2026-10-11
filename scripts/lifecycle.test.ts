@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { createClient } from '@supabase/supabase-js';
 
 // Explicitly opt in against a disposable migrated project. No fixtures or secrets logged.
-const names = ['FOOD_TEST_URL','FOOD_TEST_KEY','FOOD_TEST_ORGANIZER_EMAIL','FOOD_TEST_ORGANIZER_PASSWORD','FOOD_TEST_STUDENT_EMAIL','FOOD_TEST_STUDENT_PASSWORD','FOOD_TEST_SECOND_STUDENT_EMAIL','FOOD_TEST_SECOND_STUDENT_PASSWORD','FOOD_TEST_LOCATION_ID'];
+const names = ['FOOD_TEST_URL','FOOD_TEST_KEY','FOOD_TEST_ORGANIZER_EMAIL','FOOD_TEST_ORGANIZER_PASSWORD','FOOD_TEST_STUDENT_EMAIL','FOOD_TEST_STUDENT_PASSWORD','FOOD_TEST_SECOND_STUDENT_EMAIL','FOOD_TEST_SECOND_STUDENT_PASSWORD','FOOD_TEST_LOCATION_ID','FOOD_TEST_PHOTO_PATH'];
 const enabled = process.env.FOOD_TEST_RUN === '1';
 test('real PostgreSQL lifecycle: race, privacy, ownership, cancellation, close, expiry and exactly-once collection', { skip: !enabled }, async () => {
   const missing = names.filter(name => !process.env[name]);
@@ -18,7 +18,7 @@ test('real PostgreSQL lifecycle: race, privacy, ownership, cancellation, close, 
   const rpc = async (client: typeof student,name:string,args:Record<string,unknown>={}) => {
     const result = await client.rpc(name,args); assert.equal(result.error,null,`RPC ${name} failed`); return result.data;
   };
-  const create = (deadline = new Date(Date.now()+60000).toISOString()) => rpc(organizer,'create_food_listing',{payload:{ location_id:process.env.FOOD_TEST_LOCATION_ID,title:'Lifecycle integration test',description:'Disposable test; not real rescue inventory.',photo_path:null,portions_total:1,pickup_instructions:'Test only',pickup_deadline:deadline,dietary_tags:[],ingredients_notes:null,allergen_notes:null }});
+  const create = (deadline = new Date(Date.now()+60000).toISOString()) => rpc(organizer,'create_food_listing',{payload:{ location_id:process.env.FOOD_TEST_LOCATION_ID,title:'Lifecycle integration test',description:'Disposable test; not real rescue inventory.',photo_path:process.env.FOOD_TEST_PHOTO_PATH,portions_total:1,pickup_instructions:'Test only',pickup_deadline:deadline,dietary_tags:[],ingredients_notes:null,allergen_notes:null }});
   const ids:string[]=[];
   try {
     const id = await create(); ids.push(id);

@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { api } from '@/lib/api-client';
-import { createListingSchema, dietaryTagSchema, photoFileSchema, type ListingDraft, type Location } from '@/lib/contracts';
+import { listingDetailsSchema, dietaryTagSchema, photoFileSchema, type ListingDraft, type Location } from '@/lib/contracts';
+import { PhotoAttachment } from './photo-attachment';
 import { message } from './common';
 import styles from './organizer.module.css';
 import { DateTimePicker } from '@/components/shared/date-time-picker';
@@ -23,7 +24,10 @@ export function ListingForm() {
     const first = Object.keys(errors)[0];
     requestAnimationFrame(() => { document.getElementById(fieldIds[first] ?? first)?.focus(); });
   }
-  const [photo, setPhoto] = useState<File>(), [preview, setPreview] = useState(''), [photoPath, setPhotoPath] = useState<string | null>(null), [hint, setHint] = useState('');
+  const attachment = useRef(new PhotoAttachment());
+  const publishing = useRef(false);
+  const [photo, setPhoto] = useState<File>(), [preview, setPreview] = useState(''), [hint, setHint] = useState('');
+  const [photoFeedback, setPhotoFeedback] = useState('');
   async function loadLocations() { setError(''); try { setLocations((await api.locations()).locations); setLoaded(true); } catch (e) { setError(message(e)); } }
   useEffect(() => { void api.locations().then(({ locations }) => { setLocations(locations); setLoaded(true); }).catch(e => setError(message(e))); }, []);
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
@@ -38,7 +42,7 @@ export function ListingForm() {
     catch (e) { setError(message(e)); } finally { setStage(''); }
   }
   async function publish(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setError(''); setNotice(''); setFieldErrors({});
+    e.preventDefault(); if (busy || publishing.current) return; setError(''); setNotice(''); setFieldErrors({});
     try {
       let pickupDeadline: string | undefined;
       let deadlineError = '';
@@ -46,23 +50,27 @@ export function ListingForm() {
       catch (cause) { deadlineError = cause instanceof Error ? cause.message : 'Choose a valid pickup date and time.'; }
       if (!pickupDeadline && !deadlineError) deadlineError = 'Choose a pickup date and time.';
       if (pickupDeadline && Date.parse(pickupDeadline) <= Date.now()) deadlineError = 'Pickup deadline must be in the future.';
-      const parsed = createListingSchema.safeParse({ ...fields, pickup_deadline: pickupDeadline, portions_total: Number(fields.portions_total), photo_path: photoPath, dietary_tags: tags, ingredients_notes: fields.ingredients_notes || null, allergen_notes: fields.allergen_notes || null });
+      const parsed = listingDetailsSchema.safeParse({ ...fields, pickup_deadline: pickupDeadline, portions_total: Number(fields.portions_total), dietary_tags: tags, ingredients_notes: fields.ingredients_notes || null, allergen_notes: fields.allergen_notes || null });
       const errors: Record<string, string> = {};
       if (!parsed.success) for (const issue of parsed.error.issues) {
         const field = String(issue.path[0]);
         errors[field] = `${fieldLabels[field] ?? 'Field'}: ${issue.code === 'too_small' || issue.code === 'invalid_format' ? 'Enter a valid value.' : issue.message}`;
       }
       if (deadlineError) errors.pickup_deadline = deadlineError;
+      const photoError = attachment.current.validationMessage();
+      if (photoError) errors.photo_path = photoError;
       if (Object.keys(errors).length) {
         const order = ['title', 'description', 'portions_total', 'location_id', 'pickup_instructions', 'pickup_deadline', 'dietary_tags', 'ingredients_notes', 'allergen_notes', 'photo_path'];
         invalid(Object.fromEntries(order.filter(field => errors[field]).map(field => [field, errors[field]]))); return;
       }
       if (!parsed.success) return;
-      let path = photoPath;
-      if (photo && !path) { setStage('Uploading food photo…'); const body = new FormData(); body.set('photo', photo); path = (await api.uploadPhoto(body)).photo_path; setPhotoPath(path); }
-      setStage('Publishing listing…');
-      const { listing } = await api.createListing({ ...parsed.data, photo_path: path }); router.push(`/manage/${listing.id}`);
-    } catch (e) { setError(message(e)); } finally { setStage(''); }
+      publishing.current = true;
+      const { listing } = await attachment.current.publish(parsed.data, {
+        upload: api.uploadPhoto, create: api.createListing,
+        stage: value => { setStage(value); setPhotoFeedback(value); },
+      });
+      router.push(`/manage/${listing.id}`);
+    } catch (e) { setError(message(e)); setPhotoFeedback(attachment.current.path ? 'Photo uploaded. Publishing failed; check Manage for a possible completed listing before retrying. A retry reuses this photo.' : 'Photo upload failed. Your details are saved in this form. Publish again to retry, or choose another photo.'); } finally { publishing.current = false; setStage(''); }
   }
   return <div className={styles.shareLayout}>
     <form className={styles.form} onSubmit={publish} noValidate>
@@ -115,10 +123,12 @@ export function ListingForm() {
     </form>
     <aside className={styles.assistancePanel}>
       <span className="section-kicker">A little help</span><h2>Start with a photo</h2>
-      <p>Attach a photo, or let Gemini help write an editable draft.</p>
-      <label htmlFor="photo">Food photo <span className={styles.optional}>Optional</span></label>
-      <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { const file = e.target.files?.[0]; setPhotoPath(null); setPhoto(undefined); setPreview(''); if (file && !photoFileSchema.safeParse(file).success) { setError('Choose a JPEG, PNG or WebP image up to 5 MiB.'); e.target.value = ''; } else { setPhoto(file); setPreview(file ? URL.createObjectURL(file) : ''); setError(''); } }}/>
-      <p className={styles.help}>JPEG, PNG or WebP · Up to 5 MiB</p>
+      <p>A food photo is required to publish. Gemini drafting is optional.</p>
+      <label htmlFor="photo">Food photo <span className={styles.optional}>Required</span></label>
+      <input id="photo" type="file" required aria-invalid={Boolean(fieldErrors.photo_path)} aria-describedby={`photo-help${fieldErrors.photo_path ? " photo-error" : ""}${photoFeedback ? " photo-feedback" : ""}`} accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={e => { const file = e.target.files?.[0]; attachment.current.select(file); setPhotoFeedback(''); setFieldErrors(old => ({ ...old, photo_path: '' })); setPhoto(undefined); setPreview(''); if (file && !photoFileSchema.safeParse(file).success) { attachment.current.select(); setFieldErrors(old => ({ ...old, photo_path: 'Choose a nonempty JPEG, PNG or WebP image up to 5 MiB.' })); e.target.value = ''; } else { setPhoto(file); setPreview(file ? URL.createObjectURL(file) : ''); setError(''); } }}/>
+      <p id="photo-help" className={styles.help}>JPEG, PNG or WebP · Up to 5 MiB. Uploaded and validated when you publish.</p>
+      {fieldErrors.photo_path && <p id="photo-error" className="notice" role="alert">{fieldErrors.photo_path}</p>}
+      <p id="photo-feedback" role="status">{photoFeedback}</p>
       {preview && <Image unoptimized width={600} height={300} className={styles.preview} src={preview} alt="Selected food photo preview"/>}
       <details className={styles.notes}><summary>Draft with Gemini</summary>
         <label htmlFor="ai-description">What’s in the photo?</label><textarea className={styles.assistance} id="ai-description" maxLength={10000} value={hint} disabled={busy} placeholder="Describe the food you’re sharing." onChange={e => setHint(e.target.value)}/>

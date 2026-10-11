@@ -28,8 +28,14 @@ export const listingPost = handler(async request => {
   return NextResponse.json(c.listingResponseSchema.parse({ listing: await listing(supabase, id) }), { status: 201 });
 });
 export const listingPatch = handler(async (request, context) => {
-  const { supabase } = await requireUser(); const id = c.idSchema.parse((await context!.params).id);
-  await rpc(supabase, 'patch_food_listing', { target: id, payload: await readJson(request, c.patchListingSchema) });
+  const { supabase, user } = await requireUser(); const id = c.idSchema.parse((await context!.params).id);
+  const input = await readJson(request, c.patchListingSchema);
+  // Keep attached photos required even before the additive trigger is installed.
+  if (input.photo_path === null) {
+    if (!await listingOwnership(supabase, id, user.id)) throw new ApiError(403, 'FORBIDDEN', 'This action is not permitted.');
+    if ((await listing(supabase, id)).photo_path !== null) throw new ApiError(422, 'INVALID_INPUT', 'A food photo cannot be removed from this listing.');
+  }
+  await rpc(supabase, 'patch_food_listing', { target: id, payload: input });
   return NextResponse.json(c.listingResponseSchema.parse({ listing: await listing(supabase, id) }));
 });
 export const reservePost = handler(async (_, context) => {

@@ -7,8 +7,8 @@ test('public listing excludes pickup codes and private reservation data', () => 
   assert.equal(reservationSchema.safeParse(demoReservation).success, true);
 });
 test('create input cannot inject organizer identity or invalid inventory', () => {
-  const { location_id, title, description, photo_path, portions_total, pickup_instructions, pickup_deadline, dietary_tags, ingredients_notes, allergen_notes } = demoListing;
-  const input = { location_id, title, description, photo_path, portions_total, pickup_instructions, pickup_deadline, dietary_tags, ingredients_notes, allergen_notes };
+  const { location_id, title, description, portions_total, pickup_instructions, pickup_deadline, dietary_tags, ingredients_notes, allergen_notes } = demoListing;
+  const input = { photo_path: `${demoListing.organizer_id}/00000000-0000-4000-8000-000000000006.webp`, location_id, title, description, portions_total, pickup_instructions, pickup_deadline, dietary_tags, ingredients_notes, allergen_notes };
   assert.equal(createListingSchema.safeParse(input).success, true);
   assert.equal(createListingSchema.safeParse({ ...input, organizer_id: demoListing.organizer_id }).success, false);
   assert.equal(createListingSchema.safeParse({ ...input, portions_total: 0 }).success, false);
