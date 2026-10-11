@@ -1,5 +1,9 @@
 # Agent 2 student interface handoff
 
+## Controlled deadline filter — 2026-10-10
+
+The optional pickup-before filter uses the shared calendar date and hour/minute/AM-PM selectors in America/Chicago. Clear removes the deadline filter on the next Apply filters action. Incomplete, invalid and ambiguous/nonexistent daylight-saving selections display a friendly error and preserve current results. No endpoint or contract changed. Lint, typecheck, 22 tests (three opt-in live suites skipped) and production build passed; browser acceptance is performed by the integration owner.
+
 ## Final readiness static audit — 2026-10-10
 
 Student content now wraps long organizer-provided text, and filters/native controls fit narrow containers. These protections are scoped to the student CSS module; shared styles, contracts, configuration and dependencies are unchanged.
