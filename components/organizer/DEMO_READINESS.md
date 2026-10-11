@@ -1,0 +1,15 @@
+# Final demo readiness — October 10, 2026
+
+User selected **maps disabled for this demo**. No tile provider was configured or substituted. Map/list control stays disabled with a clear list-and-directions fallback. Successful device-location permission and real map tiles are outside this sign-off; no browser permission was granted or bypassed.
+
+## Changes and browser evidence
+
+Agent 2 supplied student CSS that constrains native controls, fits filter columns to narrow containers, and wraps long organizer-provided text. Agent 3 reproduced horizontal page overflow on hosted organizer management and listing details with valid long unbroken titles/instructions. Organizer panels now wrap those fields; organizer fieldsets/controls also have explicit narrow-width bounds. No contracts, database logic, shared styles, dependencies or environment settings changed.
+
+Ephemeral Playwright tooling outside the repository drove the installed Chrome browser with two independently signed-in organizer/student contexts and native DOM interactions. Chrome viewport widths320,390,768 were checked for feed, details, pickups, impact, share, manage and manage detail. Local production build with both CSS fixes had document scrollWidth equal viewport width on every tested page, including long-string stress data. Screenshots were visually inspected; private code elements were masked. Shared hosted navigation also passed320,375,768 widths with all eight links visible.
+
+Native geolocation in a browser context with no granted permissions returned denial; the visible fallback message appeared, the manual landmark selector remained usable and selecting a landmark enabled distance filtering. This used no fabricated coordinates or geolocation override. List results and directions remained available with Map disabled.
+
+Two distinct browser sessions completed actual Supabase password sign-in, manual UI publishing, grounded AI search, reservation, cancellation hiding the private code, re-reservation with a changed code, organizer close, collection after close, and student refresh showing collected without the code. The completed rehearsal used a local production build backed by the authorized disposable Supabase project. Initial hosted long-string pass found the overflow issue before fixes and stopped at reservation; its listing was closed. One later local rehearsal completed and adds one simulated collection, not actual food rescue. Demo listings/history persist and listings are closed. No credentials or pickup codes were printed or committed.
+
+Lint, typecheck,19 unit tests and production build passed; three unrelated opt-in suites skipped. Hosted verification after deploying the CSS fixes is still to be recorded below. Device hardware/Safari/mobile OS permission prompts were not retested; this is Chrome viewport/browser verification, not a claim of physical-device coverage.

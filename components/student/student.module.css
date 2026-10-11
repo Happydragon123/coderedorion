@@ -2,3 +2,10 @@
 
 .searchForm { max-width: 720px; }
 .summary { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Organizer text and native controls must fit narrow student screens. */
+.student { overflow-wrap: anywhere; }
+.filters { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); }
+.filters > div { min-width: 0; }
+.student select, .student input { min-width: 0; max-width: 100%; }
+.student button, .student a { max-width: 100%; }

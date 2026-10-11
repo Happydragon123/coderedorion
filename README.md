@@ -55,6 +55,8 @@ Search caches validated filter interpretations for five minutes, with a maximum 
 
 ## Maps
 
+For the current demo, the user selected maps disabled. Keep both tile settings blank; food lists, manual landmarks and external directions remain available. An authorized tile provider and attribution must be configured and verified before enabling maps.
+
 Leaflet 1.9 + React Leaflet 5 selected for provider-independent raster tiles. Agent 2 imports `leaflet/dist/leaflet.css` and loads map components client-side with SSR disabled. Both `NEXT_PUBLIC_MAP_TILE_URL` (`{z}/{x}/{y}` template) and `NEXT_PUBLIC_MAP_ATTRIBUTION` are needed before enabling tiles. No default provider or fabricated campus coordinates. Choose an authorized provider, verify its plan/domain restrictions, attribution and browser caching requirements; keys in public tile URLs are public and should be domain-restricted. Keep list view usable when tiles are unavailable.
 
 Public OSM tiles require visible attribution, appropriate caching, and prohibit bulk/offline prefetch; they are not an unlimited production backend. Sources: [OSM tile policy](https://operations.osmfoundation.org/policies/tiles/), [React Leaflet setup](https://react-leaflet.js.org/docs/start-installation/). External directions/manual landmarks can ship before maps.
@@ -73,7 +75,7 @@ Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/t
 
 Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
 
-Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Hosted organizer/photo/search lifecycle and separate-session student search-to-pickup checks passed after switching to `gemini-3.5-flash-lite`; see [the verification report](docs/search-integration.md). AI drafts require manual entry of location, quantity, pickup instructions and deadline. Pending: real map provider verification, mobile/geolocation-denial checks, live verification of shared AI admission and interpretation caching.
+Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Hosted organizer/photo/search lifecycle and separate-session student search-to-pickup checks passed after switching to `gemini-3.5-flash-lite`; see [the verification report](docs/search-integration.md). AI drafts require manual entry of location, quantity, pickup instructions and deadline. Shared AI admission/cache migration, live storage acceptance and bounded hosted reliability checks passed. Chrome viewport and geolocation-denial checks passed; see [demo readiness](components/organizer/DEMO_READINESS.md) for CSS fixes and browser coverage. Post-deployment verification of those CSS fixes remains pending. Maps stay disabled by user choice; real provider verification remains outside this demo.
 
 ## Dependency audit
 
