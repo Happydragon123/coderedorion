@@ -6,6 +6,7 @@ import type { Listing } from '@/lib/contracts';
 import { deadline, message } from './common';
 import styles from './organizer.module.css';
 import { isActiveListing, ManageQuantity } from './manage-state';
+import { ListingPhoto } from '@/components/student/listing-photo';
 export function ManageListings({ listingId }: { listingId?: string }) {
   const [now, setNow] = useState(() => Date.now());
   const [rows, setRows] = useState<Listing[]>([]), [loading, setLoading] = useState(true), [error, setError] = useState('');
@@ -49,6 +50,7 @@ export function ManageListings({ listingId }: { listingId?: string }) {
   const active = selected.filter(row => isActiveListing(row, now));
   const history = selected.filter(row => !isActiveListing(row, now));
   const groups = listingId ? [{ title: 'Listing', rows: selected }] : [{ title: 'Active listings', rows: active }, { title: 'History — closed and expired', rows: history }];
+  const ListingHeading = listingId ? 'h2' : 'h3';
   return <>
     <dialog ref={dialog} className={styles.closeDialog} aria-labelledby="close-title" aria-describedby="close-description" onCancel={e => { if (closingBusy) e.preventDefault(); }} onClose={() => { setClosing(null); setCloseError(''); requestAnimationFrame(() => { if (closeTrigger.current?.isConnected) closeTrigger.current.focus(); else feedback.current?.focus(); }); }}>
       <h2 id="close-title">Close “{closing?.title}”?</h2>
@@ -60,21 +62,29 @@ export function ManageListings({ listingId }: { listingId?: string }) {
     <div className={styles.toolbar}><p>Closing stops new reservations. Existing pickups stay valid until the deadline.</p><button className="button-secondary" onClick={() => void refresh()} disabled={loading || busy || !!closing}>Refresh</button></div>
     {loading && <p className="loading-state" role="status">Loading your listings…</p>}{error && <p className="notice" role="alert">{error}</p>}{notice && <p ref={feedback} tabIndex={-1} className="notice" role="status">{notice}</p>}
     {!loading && !error && !selected.length && <div className="empty-state"><h2>{listingId ? 'Listing unavailable' : 'Ready to share something?'}</h2><p>{listingId ? 'This listing is unavailable or is not owned by your account.' : 'Your shared food will appear here, ready for you to manage pickups.'}</p><Link className="button" href="/share">Share food</Link></div>}
-    {groups.map(group => <section key={group.title} aria-label={group.title}>
-    {!listingId && <h2>{group.title} ({group.rows.length})</h2>}
+    {groups.map(group => {
+    const isHistory = !listingId && group.rows === history;
+    const Group = isHistory ? 'details' : 'section';
+    const heading = <h2 className={styles.groupHeading}>{group.title} <span className={styles.groupCount}>({group.rows.length})</span></h2>;
+    return <Group className={`${styles.manageSection} ${isHistory ? styles.historyDisclosure : ''}`} key={group.title} aria-label={group.title}>
+    {!listingId && (isHistory ? <summary>{heading}</summary> : heading)}
     {!loading && !error && !listingId && !group.rows.length && <p className="muted">{group.title === 'Active listings' ? 'No active listings.' : 'No closed or expired listings yet.'}</p>}
-    <div className={`${styles.listings} ${listingId ? styles.listingDetail : ''}`}>{group.rows.map(row => <article className={styles.listing} key={row.id}>
+    <div className={`${styles.listings} ${listingId ? styles.listingDetail : !isHistory ? styles.activeListings : ''}`}>{group.rows.map(row => <article className={styles.listing} key={row.id}>
+      <div className={styles.listingPhoto}><ListingPhoto path={row.photo_path} title={row.title} variant={listingId ? 'detail' : 'card'}/></div>
+      <div className={styles.listingBody}>
       <span className={`${styles.status} ${row.status === 'closed' || Date.parse(row.pickup_deadline) <= now ? styles.statusClosed : ''}`}>{row.status === 'closed' ? (Date.parse(row.pickup_deadline) <= now ? 'Closed · expired' : 'Closed') : Date.parse(row.pickup_deadline) <= now ? 'Expired' : 'Open'}</span>
-      <h2><Link href={`/manage/${row.id}`}>{row.title}</Link></h2>
+      <ListingHeading className={styles.listingTitle}><Link href={`/manage/${row.id}`}>{row.title}</Link></ListingHeading>
       <p className={styles.metadata}>{row.location.name}</p>
       <div className={styles.count}><ManageQuantity row={row} now={now}/></div>
       <p className={styles.metadata}>Pickup by {deadline(row.pickup_deadline)} (America/Chicago)</p>
-      {listingId && <p>{row.pickup_instructions}</p>}
-      <div className={styles.actions}>{!listingId && <Link className="button button-secondary" href={`/manage/${row.id}`}>Manage pickup</Link>}{active.includes(row) && <button className="button-secondary" disabled={busy || !!closing} onClick={e => { closeTrigger.current = e.currentTarget; setCloseError(''); setClosing(row); }}>Close listing</button>}</div>
+      {listingId && <p className={styles.pickupInstructions}>{row.pickup_instructions}</p>}
+      {(!listingId || active.includes(row)) && <div className={`${styles.actions} ${styles.listingActions}`}>{!listingId && <Link className="button" href={`/manage/${row.id}`}>Manage pickup</Link>}{active.includes(row) && <button className="button-secondary" disabled={busy || !!closing} onClick={e => { closeTrigger.current = e.currentTarget; setCloseError(''); setClosing(row); }}>Close listing</button>}</div>}
+      </div>
       {listingId && <form className={styles.collection} onSubmit={e => { e.preventDefault(); void act(row); }}>
         <h3>Confirm a pickup</h3><label htmlFor="pickup-code">Student pickup code</label><input id="pickup-code" value={code} onChange={e => setCode(e.target.value)} required maxLength={32} autoComplete="off" placeholder="Enter the student’s code"/>
         <button disabled={busy || !!closing || !code.trim() || Date.parse(row.pickup_deadline) <= now}>Confirm collection</button><p className={styles.help}>Confirm after handing over one portion. Each collection counts once.</p>
       </form>}
-    </article>)}</div></section>)}
+    </article>)}</div></Group>;
+    })}
   </>;
 }
