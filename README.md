@@ -1,4 +1,4 @@
-# Campus Food Rescue
+# foodsurpl.us
 
 Agent 0 foundation for the [build plan](campus-food-rescue-handoffs.md). Next.js App Router, TypeScript, Supabase cookie sessions, Zod contracts, and Leaflet dependencies. Agent 1 implemented database migrations, RLS, private photo storage, authenticated food APIs, and atomic lifecycle operations. Agent 2’s protected student feed, details, pickups and impact interface is integrated. Agent 3’s organizer posting, management and Gemini endpoints are integrated. Agent 0 and Agent 1 froze the reviewed contracts; see [docs/contracts.md](docs/contracts.md) and [database setup](docs/database.md).
 
