@@ -1,2 +1,2 @@
 import { ListingForm } from '@/components/organizer/listing-form';
-export default function SharePage() { return <><h1>Share food</h1><p>Complete the form to publish. Photo assistance is optional. Confirm all details before sharing.</p><ListingForm /></>; }
+export default function SharePage() { return <><div className="page-heading"><span className="section-kicker">Make someone’s day</span><h1>Good food deserves a second plate.</h1><p className="page-description">Share your extra food with campus. Add the details, choose a pickup time, and we’ll help it find a home.</p></div><ListingForm /></>; }
