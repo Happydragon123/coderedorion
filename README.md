@@ -1,4 +1,4 @@
-# Campus Food Rescue
+# foodsurpl.us
 
 **Good food. Shared locally.**
 

@@ -1,6 +1,6 @@
-# Campus Food Rescue: build plan and agent handoffs
+# foodsurpl.us: build plan and agent handoffs
 
-Build plan and implementation handoffs. Foundation is implemented; feature work follows the ownership below. Selected stack: Next.js App Router, TypeScript, Supabase Auth/Postgres/Storage, Gemini. Use an existing repository's conventions if they differ. Working project name: Campus Food Rescue.
+Build plan and implementation handoffs. Foundation is implemented; feature work follows the ownership below. Selected stack: Next.js App Router, TypeScript, Supabase Auth/Postgres/Storage, Gemini. Use an existing repository's conventions if they differ. Official project name: foodsurpl.us.
 
 Current continuation handoff: [hackathon release checks](docs/hackathon-release.md) and [completion tracker](docs/problems.md). Shared AI rate limiting/cache and earlier mobile lifecycle checks are complete. Current release work concerns signup confirmation, deployment and browser verification of newer account/navigation/map changes. [The earlier Agent 0 handoff](docs/AGENT_0_HANDOFF.md) is historical; its AI reliability queue has been completed.
 
