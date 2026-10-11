@@ -4,6 +4,8 @@ import { useCallback, useState } from 'react';
 import { api } from '@/lib/api-client';
 import type { ListingFilters, Location, SearchRequest } from '@/lib/contracts';
 import { originSchema, searchRequestSchema } from '@/lib/contracts';
+import { DateTimePicker } from '@/components/shared/date-time-picker';
+import { EMPTY_DATE_TIME, dateTimeToIso, type DateTimeSelection } from '@/lib/date-time';
 import { Failure, FoodCard, deadline, dietaryLabels, useClock, useResource } from './common';
 import styles from './student.module.css';
 const FoodMap = dynamic(() => import('@/components/map/food-map'), { ssr: false, loading: () => <p role="status">Loading map…</p> });
@@ -12,6 +14,8 @@ const attribution = process.env.NEXT_PUBLIC_MAP_ATTRIBUTION;
 export function FoodFeed() {
   const locations = useResource(api.locations);
   const [filters, setFilters] = useState<ListingFilters>({});
+  const [pickupBefore, setPickupBefore] = useState<DateTimeSelection>(EMPTY_DATE_TIME);
+  const [filterError, setFilterError] = useState('');
   const [pickupLocation, setPickupLocation] = useState('');
   const [search, setSearch] = useState<{ request: SearchRequest; version: number }>();
   const [searchError, setSearchError] = useState('');
@@ -35,7 +39,14 @@ export function FoodFeed() {
     if (data.get('location')) next.location_id = String(data.get('location'));
     if (data.get('diet')) next.dietary_tag = String(data.get('diet')) as ListingFilters['dietary_tag'];
     if (origin) { next.origin_lat = origin.latitude; next.origin_lng = origin.longitude; if (data.get('distance')) next.max_distance_m = Number(data.get('distance')); }
-    if (data.get('before')) next.pickup_before = new Date(String(data.get('before'))).toISOString();
+    try {
+      const before = dateTimeToIso(pickupBefore);
+      if (before) next.pickup_before = before;
+    } catch (error) {
+      setFilterError(error instanceof Error ? error.message : 'Choose a complete pickup deadline or clear it.');
+      return;
+    }
+    setFilterError('');
     setFilters(next);
     setSearch(undefined);
     setSearchError('');
@@ -53,9 +64,9 @@ export function FoodFeed() {
     <div><label htmlFor="origin">Distance from</label><select id="origin" value={origin ? (locations.data?.locations.find(l => l.latitude === origin.latitude && l.longitude === origin.longitude)?.id ?? 'device') : ''} onChange={e => { const location = locations.data?.locations.find(l => l.id === e.target.value); setOrigin(location ? { latitude: location.latitude, longitude: location.longitude } : e.target.value === 'device' ? deviceOrigin : undefined); }}><option value="">No distance origin</option>{deviceOrigin && <option value="device">Device location</option>}{locations.data?.locations.map((location: Location) => <option key={location.id} value={location.id}>{location.name}</option>)}</select></div>
     <div><label htmlFor="diet">Confirmed dietary tag</label><select id="diet" name="diet"><option value="">Any / unknown included</option>{Object.entries(dietaryLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
     <div><label htmlFor="distance">Maximum straight-line distance</label><select id="distance" name="distance" disabled={!origin}><option value="">Any distance</option><option value="805">0.5 miles</option><option value="1609">1 mile</option><option value="4828">3 miles</option></select></div>
-    <div><label htmlFor="before">Pickup deadline before (device timezone)</label><input id="before" name="before" type="datetime-local"/></div>
+    <div><DateTimePicker id="before" label="Pickup deadline before" value={pickupBefore} onChange={value => { setPickupBefore(value); setFilterError(''); }} clearable/></div>
     <div className={styles.actions}><button type="submit">Apply filters</button><button type="button" disabled={geoBusy} onClick={locate}>{geoBusy ? 'Locating…' : 'Use my location'}</button></div>
-    </form>{geoMessage && <p role="status">{geoMessage}</p>}{locations.data?.locations.length === 0 && <p>No campus landmarks have been configured yet.</p>}<section className="panel" aria-labelledby="search-heading"><h2 id="search-heading">Describe what you’re looking for</h2>
+    </form>{filterError && <p className="notice" role="alert">{filterError}</p>}{geoMessage && <p role="status">{geoMessage}</p>}{locations.data?.locations.length === 0 && <p>No campus landmarks have been configured yet.</p>}<section className="panel" aria-labelledby="search-heading"><h2 id="search-heading">Describe what you’re looking for</h2>
       <form className={styles.searchForm} onSubmit={searchFood}>
         <label htmlFor="food-query">Food request</label>
         <input id="food-query" name="query" type="text" required maxLength={1000} placeholder="Vegetarian food at Student Center South" aria-describedby="search-help"/>
