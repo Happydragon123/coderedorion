@@ -9,7 +9,7 @@ Source of truth: `lib/contracts.ts`. Agent 0 owns changes. Agent 0 and Agent 1 r
 - listings: id UUID PK, organizer_id (profiles), location_id (locations), title, description, photo_path nullable, portions_total positive integer, pickup_instructions, pickup_deadline timestamptz, dietary_tags text array, ingredients_notes/allergen_notes nullable, status open|closed, created_at timestamptz.
 - reservations: id UUID PK, listing_id, student_id (profiles), pickup_code, status reserved|collected|cancelled|expired, created_at, collected_at nullable.
 
-Listing DTO = listing row + nested `location` + `available_portions` + optional `distance_m`. Public listings never include codes/reservations. Reservation DTO is private to its student and listing organizer. Dietary enum: vegetarian, vegan, halal, gluten_free. Empty tags means unknown/unconfirmed, never a positive claim. Notes may be null. Times are ISO-8601 UTC on output; offset ISO timestamps accepted on input. UI displays America/Chicago. IDs are UUIDs. Quantity is always one.
+Listing DTO = listing row + nested `location` + `available_portions` + optional `distance_m` and `sharer: {display_name,organization_name}`. Agent 0/Agent 1 coordinated this additive attribution extension on 2026-10-10. The dedicated authenticated `food_listing_sharers(uuid[])` function exposes only these approved sharing fields for requested posts; existing profile RLS and availability view remain unchanged. `sharer` is omitted only when the additive RPC is unavailable before migration installation; UI labels that state explicitly. Public listings never include email, auth metadata, codes or reservations. Reservation DTO is private to its student and listing organizer. Dietary enum: vegetarian, vegan, halal, gluten_free. Empty tags means unknown/unconfirmed, never a positive claim. Notes may be null. Times are ISO-8601 UTC on output; offset ISO timestamps accepted on input. UI displays America/Chicago. IDs are UUIDs. Quantity is always one.
 
 ## Endpoints
 
@@ -27,12 +27,16 @@ All feature APIs require a verified session (including reads); `/api/health` is 
 | POST /api/listings/:id/collect | `{pickup_code}` | `{reservation}` |
 | GET /api/me/reservations | none | `{reservations: Reservation[]}` |
 | GET /api/me/listings | none | `{listings: Listing[]}` |
+| GET /api/me/profile | none | `{profile: Profile}` (own profile only) |
+| PATCH /api/me/profile | `{display_name,organization_name}` | `{profile: Profile}` (own profile only) |
 | GET /api/impact | none | `{posted_portions,collected_portions,active_reserved_portions}` |
 | POST /api/uploads/photo | multipart `photo` | `{photo_path}` (201) |
 | POST /api/ai/listing-draft | multipart optional `photo`, `description`; at least one nonempty | `{draft,missing_fields}` |
 | POST /api/ai/search | `{query,origin?:{latitude,longitude},location_id?}` | `{filters,listings,summary}` |
 
 Queries: location_id, dietary_tag, origin_lat/origin_lng (paired), max_distance_m (requires origin; 1–100000), pickup_before. Distance is straight-line meters. Unknown tags do not match dietary filters. Search returns only data retrieved under validated deterministic filters. DTO draft contains all creation fields, each nullable; missing_fields lists required fields needing organizer input. Drafting never publishes or confirms dietary/allergen claims. Server policy always clears location, quantity, pickup instructions and deadline from AI drafts and requires organizer entry; ingredient, allergen and dietary fields also remain null. Cap description input at 10000 characters in draft handlers; apply output schema field limits.
+
+Profile PATCH is strict: trimmed display name (1–120 characters), nullable trimmed organization (at most 120; empty becomes null). Both fields are required; IDs, email and roles are rejected. Identity is derived from `requireUser` and protected by self-update RLS. Names are user-chosen public attribution, not authorization or verified affiliations. Signup metadata is only used to initialize these two fields; existing profiles are never overwritten. Setup and local verification: [accounts and profiles](account-profiles.md).
 
 Photo max 5 MiB, JPEG/PNG/WebP. Validate file signatures and actual decoded content server-side, not just MIME names. Agent 1 owns compression/storage paths. Private keys remain server-side. Rate limits/timeouts belong to endpoint owners.
 

@@ -19,6 +19,13 @@ export const googleMapsUrlSchema = z.string().min(1).max(2048).refine(value => {
 }, 'Use an HTTPS Google Maps share link from a supported Google Maps host.');
 export const locationSchema = z.object({ id: idSchema, name: z.string().min(1).max(120), latitude: z.number().min(-90).max(90), longitude: z.number().min(-180).max(180), google_maps_url: googleMapsUrlSchema.nullable().optional() }).strict();
 export const profileSchema = z.object({ id: idSchema, display_name: z.string().min(1).max(120), organization_name: z.string().max(120).nullable() }).strict();
+// Only these user-chosen fields are shared with people viewing food posts.
+export const sharingIdentitySchema = profileSchema.omit({ id: true });
+export const updateProfileSchema = z.object({
+  display_name: z.string().trim().min(1, 'Enter a display name.').max(120, 'Use at most 120 characters.'),
+  organization_name: z.string().trim().max(120, 'Use at most 120 characters.').nullable().transform(value => value || null),
+}).strict();
+export const profileResponseSchema = z.object({ profile: profileSchema }).strict();
 const listingFields = {
   location_id: idSchema, title: z.string().trim().min(1).max(160), description: z.string().trim().min(1).max(4000),
   photo_path: z.string().min(1).max(512).nullable(), portions_total: z.number().int().positive().max(10000),
@@ -28,7 +35,7 @@ const listingFields = {
 };
 export const createListingSchema = z.object(listingFields).strict();
 export const patchListingSchema = createListingSchema.partial().extend({ status: z.enum(['open', 'closed']).optional() }).strict().refine(v => Object.keys(v).length > 0, 'Provide at least one field');
-export const listingSchema = createListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema, location: locationSchema, available_portions: z.number().int().nonnegative(), distance_m: z.number().nonnegative().optional() }).strict();
+export const listingSchema = createListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema, location: locationSchema, available_portions: z.number().int().nonnegative(), distance_m: z.number().nonnegative().optional(), sharer: sharingIdentitySchema.optional() }).strict();
 export const reservationSchema = z.object({ id: idSchema, listing_id: idSchema, student_id: idSchema, pickup_code: z.string().min(1).max(32), status: z.enum(['reserved', 'collected', 'cancelled', 'expired']), created_at: timestampSchema, collected_at: timestampSchema.nullable() }).strict();
 export const collectSchema = z.object({ pickup_code: z.string().trim().min(1).max(32) }).strict();
 const queryNumber = (min: number, max: number) => z.preprocess(v => typeof v === 'string' && v.trim() !== '' ? Number(v) : v, z.number().min(min).max(max));
@@ -53,6 +60,8 @@ export const searchResponseSchema = z.object({ filters: listingFiltersSchema, li
 export const MEDIA_LIMITS = { photoBytes: 5 * 1024 * 1024, photoMimeTypes: ['image/jpeg','image/png','image/webp'] } as const;
 export type Location = z.infer<typeof locationSchema>;
 export type Profile = z.infer<typeof profileSchema>;
+export type SharingIdentity = z.infer<typeof sharingIdentitySchema>;
+export type UpdateProfile = z.infer<typeof updateProfileSchema>;
 export type Listing = z.infer<typeof listingSchema>;
 export type Reservation = z.infer<typeof reservationSchema>;
 export type CreateListing = z.infer<typeof createListingSchema>;

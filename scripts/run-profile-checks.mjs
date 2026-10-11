@@ -1,0 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
+import { spawnSync } from 'node:child_process';
+
+// Read-only integration: use existing approved demo account, no signup email or writes.
+const base = new URL(process.argv[2] || 'http://localhost:3000');
+if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password) throw new Error('Provide the local app origin.');
+const local = parseEnv(readFileSync('.env.local', 'utf8'));
+const env = { ...process.env, FOOD_PROFILE_HTTP_TEST_RUN: '1', FOOD_HTTP_TEST_BASE_URL: base.origin,
+  FOOD_TEST_URL: local.FOOD_TEST_URL || local.NEXT_PUBLIC_SUPABASE_URL,
+  FOOD_TEST_KEY: local.FOOD_TEST_KEY || local.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  FOOD_TEST_ORGANIZER_EMAIL: local.FOOD_TEST_ORGANIZER_EMAIL || process.env.FOOD_TEST_ORGANIZER_EMAIL,
+  FOOD_TEST_ORGANIZER_PASSWORD: local.FOOD_TEST_ORGANIZER_PASSWORD || process.env.FOOD_TEST_ORGANIZER_PASSWORD,
+};
+const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', 'scripts/profile-http.test.ts'], { env, stdio: 'inherit' });
+process.exitCode = result.status ?? 1;

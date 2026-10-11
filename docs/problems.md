@@ -18,7 +18,7 @@ Evidence: `lib/server/auth.ts`, `lib/contracts.ts`, both protected route-group l
 
 ### 2. Add account creation and a complete onboarding path — Original #1
 
-The only auth form calls `signInWithPassword`; a new user cannot register through the app. Add registration, confirmation/resend handling where configured, clear errors, and an obvious route back to sign-in. Collect the display identity needed for item 7 rather than leaving every new profile named “Campus member.”
+**Implemented locally; setup and confirmation verification remain.** `/sign-up` now collects a sharing name, optional organization and matching passwords; real Supabase signup, confirmation/resend controls, callback handling and sign-in links are implemented. Install the local sharing-identity migration so confirmation-enabled signup initializes the chosen name. Verify actual email delivery and the new-account confirmation round trip before closing this item. See [accounts and profiles](account-profiles.md).
 
 **Done when:** a new user can create an account and reach the protected app using real Supabase auth, including the deployed confirmation callback.
 
@@ -50,7 +50,7 @@ Evidence: `components/shared/auth-form.tsx`, current auth routes.
 
 ### 6. Make navigation and sign-in aware of the session — Original #2, expanded
 
-The navigation always includes both Account and Sign in, and the sign-in page does not redirect authenticated users. Sign-in also always finishes at `/account`, losing the intended destination.
+**Partially implemented locally.** Navigation now responds to session changes, showing Account for members and Sign in/Create account for guests. Sign-in/signup redirect authenticated users, and an allowlisted local return destination survives authentication. Read-only HTTP guards/returns passed. The remaining work is mobile navigation simplification, browser verification of session transitions, and a direct sign-out navigation action (sign-out is available on Account).
 
 **Done when:** authenticated users see account/sign-out actions; guests see sign-in/create-account actions; opening sign-in while authenticated redirects appropriately; a safe local return destination survives authentication. Simplify the eight-link mobile navigation around the main flows.
 
@@ -58,7 +58,7 @@ Evidence: `components/shared/navigation.tsx`, `app/sign-in/page.tsx`, `component
 
 ### 7. Explain who is sharing the food — Original #4
 
-Add a sharer identity section to Share food and display the confirmed display name and optional organization on listing details. Account currently shows only an email. Profiles already contain name/organization fields, but the listing DTO only exposes `organizer_id`, and profile reads are restricted to the current user.
+**Implemented locally; attribution migration and two-account browser verification remain.** Account now edits the saved sharing name/organization; Share food previews the identity and links to edit it. Food cards and details render the name and optional organization through the additive `sharer` DTO. The local migration exposes only approved attribution via an authenticated listing-specific RPC, keeping profile reads self-only and emails private. It has not been applied to the hosted database; until then, listing identity explicitly appears unavailable. Isolated PostgreSQL privacy/editing tests and read-only local HTTP checks passed. See [accounts and profiles](account-profiles.md).
 
 **Done when:** users can review/update their sharing identity and recipients can see the intended public attribution. Expose only the approved public fields; do not make private emails or whole profiles public.
 

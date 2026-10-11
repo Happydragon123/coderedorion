@@ -77,6 +77,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible { border-color:v
 .account-panel { max-width:740px; margin:auto; }
 .account-email { overflow-wrap:anywhere; }
 .account-links { display:flex; flex-wrap:wrap; gap:.65rem; margin:1.5rem 0; }
+.profile-section { padding:1.5rem 0 .5rem; margin-top:1.5rem; border-top:1px solid var(--line); }
+.sharer-identity { font-size:.9rem; overflow-wrap:anywhere; }
+.sharer-identity strong { color:var(--accent); }
+.sharing-preview { margin-bottom:1.5rem; padding:1.25rem; border-left:3px solid var(--accent); background:var(--surface-soft); border-radius:8px; }
+.sharing-preview h2 { font-size:1.1rem; }
 .date-time-picker { min-width:0; margin:1rem 0; padding:1rem; border:1px solid var(--line); border-radius:10px; background:var(--surface-soft); }
 .date-time-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; }
 .date-time-row select { padding-left:.5rem; padding-right:1.4rem; background-position:right .25rem center; }

@@ -1,11 +1,14 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseConfig } from '@/lib/supabase/config';
+import { authDestination } from '@/lib/auth-input';
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const config = supabaseConfig();
   const protectedPage = ['/account','/listings','/my-pickups','/impact','/share','/manage'].some(path => request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith(path + '/'));
-  if (!config) return protectedPage ? NextResponse.redirect(new URL('/sign-in', request.url)) : response;
+  const signInTarget = new URL('/sign-in', request.url);
+  signInTarget.searchParams.set('next', authDestination(request.nextUrl.pathname + request.nextUrl.search));
+  if (!config) return protectedPage ? NextResponse.redirect(signInTarget) : response;
   const supabase = createServerClient(config.url, config.key, { cookies: {
     getAll: () => request.cookies.getAll(),
     setAll(values) {
@@ -16,9 +19,11 @@ export async function proxy(request: NextRequest) {
   } });
   const { data, error } = await supabase.auth.getUser();
   if (protectedPage && (error || !data.user)) {
-    const target = new URL('/sign-in', request.url);
-    const redirect = NextResponse.redirect(target);
+    const redirect = NextResponse.redirect(signInTarget);
     response.cookies.getAll().forEach(cookie => redirect.cookies.set(cookie));
+    for (const name of ['cache-control','expires','pragma']) {
+      const value = response.headers.get(name); if (value) redirect.headers.set(name, value);
+    }
     return redirect;
   }
   return response;

@@ -23,6 +23,8 @@ async function request<T>(path: string, schema: z.ZodType<T>, init?: RequestInit
 const json = (method: string, body: unknown): RequestInit => ({ method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 const id = (value: string) => c.idSchema.parse(value);
 export const api = {
+  profile: () => request('/api/me/profile', c.profileResponseSchema),
+  updateProfile: (body: c.UpdateProfile) => request('/api/me/profile', c.profileResponseSchema, json('PATCH', c.updateProfileSchema.parse(body))),
   locations: () => request('/api/locations', c.locationsResponseSchema),
   listings: (filters: c.ListingFilters = {}) => {
     const parsed = c.listingFiltersSchema.parse(filters);
