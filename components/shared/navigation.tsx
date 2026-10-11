@@ -33,13 +33,13 @@ export function Navigation() {
     } catch { setError('Couldn’t sign out. Please try again.'); }
     finally { setBusy(false); }
   }
-  function link(href: string, label: string) {
-    return <Link key={href} href={href} aria-current={pathname === href || (href !== '/' && pathname.startsWith(`${href}/`)) ? 'page' : undefined}>{label}</Link>;
+  function link(href: string, label: string, className?: string) {
+    return <Link key={href} className={className} href={href} aria-current={pathname === href || (href !== '/' && pathname.startsWith(`${href}/`)) ? 'page' : undefined}>{label}</Link>;
   }
   return <nav className="site-nav" aria-label="Main navigation">
     {links.map(([href,label]) => link(href,label))}
-    {signedIn ? <>{link('/my-pickups','My pickups')}<details ref={menu} className="nav-more"><summary>More</summary><div className="nav-menu">
-      {link('/','Home')}{link('/manage','Manage food')}{link('/impact','Impact')}{link('/account','Account')}
+    {signedIn ? <>{link('/manage','Manage food')}{link('/my-pickups','My pickups')}<details ref={menu} className="nav-more"><summary>More</summary><div className="nav-menu">
+      {link('/impact','Impact')}{link('/account','Account')}
       <button type="button" disabled={busy} onClick={() => void signOut()}>{busy ? 'Signing out…' : 'Sign out'}</button>
       {error && <p role="alert">{error}</p>}
     </div></details></> : <>{link('/sign-in','Sign in')}{link('/sign-up','Create account')}</>}
