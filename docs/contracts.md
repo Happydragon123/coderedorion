@@ -36,7 +36,7 @@ Queries: location_id, dietary_tag, origin_lat/origin_lng (paired), max_distance_
 
 Photo max 5 MiB, JPEG/PNG/WebP. Validate file signatures and actual decoded content server-side, not just MIME names. Agent 1 owns compression/storage paths. Private keys remain server-side. Rate limits/timeouts belong to endpoint owners.
 
-Errors: `{error:{code,message}}`. 401 UNAUTHENTICATED; 403 FORBIDDEN; 404 NOT_FOUND; 409 CONFLICT (sold out, duplicate, lifecycle conflict); 422 INVALID_INPUT; 429 RATE_LIMITED; 503 UPSTREAM_UNAVAILABLE or CONFIGURATION_MISSING; 500 INTERNAL_ERROR. Do not leak secrets/provider responses. Shared client validates responses, throws `ApiClientError`, and never substitutes fake success.
+Errors: `{error:{code,message}}`. 401 UNAUTHENTICATED; 403 FORBIDDEN; 404 NOT_FOUND; 409 CONFLICT (sold out, duplicate, lifecycle conflict); 422 INVALID_INPUT; 429 RATE_LIMITED; 503 UPSTREAM_UNAVAILABLE or CONFIGURATION_MISSING; 500 INTERNAL_ERROR. Do not leak secrets/provider responses. AI rate-limit responses may additionally include `Retry-After` (integer seconds) and `X-AI-Rate-Limit-Source` (`app` or `provider`); these headers do not change the frozen JSON envelope. Shared client validates responses, throws `ApiClientError` with optional header metadata in `options`, and never substitutes fake success.
 
 ## Reviewed database invariants
 

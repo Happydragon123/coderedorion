@@ -16,7 +16,7 @@ export async function generate<T>(instructions: string, prompt: string, schema: 
       method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, signal: AbortSignal.timeout(45000),
       body: JSON.stringify({ systemInstruction: { parts: [{ text: instructions }] }, contents: [{ role: 'user', parts }], generationConfig: { temperature: 0, maxOutputTokens: 8192, responseMimeType: 'application/json', responseJsonSchema: z.toJSONSchema(schema, { io: 'output' }) } }),
     });
-    if (response.status === 429) throw new ApiError(429, 'RATE_LIMITED', 'Gemini is busy. Try again later or use manual posting and standard filters.');
+    if (response.status === 429) throw new ApiError(429, 'RATE_LIMITED', 'Gemini quota is unavailable. Wait before trying again or use manual posting and standard filters.', { retryAfterSeconds: 3600, rateLimitSource: 'provider' });
     if (!response.ok) throw new ApiError(503, 'UPSTREAM_UNAVAILABLE', providerFailureMessage(response.status, await response.json().catch(() => null)));
     const data = await response.json();
     const candidate = data.candidates?.[0];
