@@ -1,6 +1,6 @@
 # Required photos for new listings — task #19
 
-October 11, 2026: implemented locally. Hosted migration and read-only installation verification **passed by user confirmation**, isolated database execution **pending**, basic publish flow **user-confirmed**; forced failure/retry acceptance **pending**. #19 is not Done. No commit, deployment, dependencies installed, hosted test inventory, AI calls or lifecycle runner execution.
+October 11, 2026: implemented locally. Hosted migration and read-only installation verification **passed by user confirmation**, isolated database execution **passed by user execution**, basic publish flow and bounded failure/retry acceptance **user-confirmed**. #19 is **Done** for the scoped requirement; deployment remains separate. No agent commit, deployment, dependency installation, hosted test inventory, AI calls or lifecycle runner execution. The user installed a temporary external verification runtime; application dependencies/lockfile are unchanged.
 
 The Share form requires a selected nonempty JPEG/PNG/WebP up to 5 MiB. It validates details and selection before upload, then awaits the authenticated decoding/reencoding + private Storage endpoint before validating the creation payload and publishing. Upload/publish stages and retry guidance are announced; form values remain intact. A confirmed attachment survives publish failure in this mounted form and is reused on explicit retry. Selecting/clearing/replacing the photo invalidates it. Upload responses with malformed paths are never treated as success. Manual publishing makes no Gemini request. Progress is stage-based, not a byte percentage.
 
@@ -8,7 +8,20 @@ Creation now requires a UUID-owner/UUID-filename image attachment path. Historic
 
 ## Hosted installation evidence
 
-October 11, 2026: the user confirmed that the required-photo migration succeeded and all verification booleans returned true. The reported historical photo-less count is **3**, which is allowed. This is user-reported migration/read-only acceptance; no raw result table or independent agent database execution was supplied. Do not rerun the applied migration. The user subsequently confirmed the basic missing-photo/valid-photo publish flow works. Forced upload/publish failure and retry checks were not explicitly confirmed; those and isolated database behavior remain pending. The reported blank photo-error box before submission is now conditionally rendered only when a message exists.
+October 11, 2026: the user confirmed that the required-photo migration succeeded and all verification booleans returned true. The reported historical photo-less count is **3**, which is allowed. This is user-reported migration/read-only acceptance; no raw result table or independent agent database execution was supplied. Do not rerun the applied migration. The user subsequently confirmed the basic missing-photo/valid-photo publish flow works. The user subsequently confirmed the refreshed UI and bounded upload/publish failure/retry checks passed. The user then supplied `PASS: isolated PostgreSQL required-photo RPC/insert/update enforcement and preserved legacy history.` Isolated database behavior is now accepted on user-run test evidence. The reported blank photo-error box before submission is now conditionally rendered only when a message exists.
+
+## Running isolated tests without an existing runtime
+
+The user can install a temporary verification-only runtime outside the checkout (the agent has not installed dependencies):
+
+```sh
+cd /Users/ethanwu/Documents/college/senior/code_red/coderedorion
+photo_sql_runtime=$(mktemp -d /tmp/cfr-photo-sql.XXXXXX)
+npm install --prefix "$photo_sql_runtime" --no-save --package-lock=false @electric-sql/pglite
+node scripts/verify-required-photos.mjs "$photo_sql_runtime"
+```
+
+Run these in one terminal so the variable is retained. Expected output: `PASS: isolated PostgreSQL required-photo RPC/insert/update enforcement and preserved legacy history.` This uses only in-memory PostgreSQL with local shims; no Supabase URL/credentials are needed. Report the PASS line or exact error, without secrets.
 
 ## Apply and verify
 
@@ -21,7 +34,7 @@ October 11, 2026: the user confirmed that the required-photo migration succeeded
    FOOD_PHOTO_LOCAL_RUNTIME=/absolute/path/to/existing-verification-runtime npm test
    ```
 
-   That directory must contain `node_modules/@electric-sql/pglite/dist/index.js`. No runtime was found here and none was installed. Default `npm test` explicitly skips this case. The runner tests missing/null/empty/malformed/nonexistent/foreign attachment denial through RPC and direct INSERT, valid creation, RPC/direct UPDATE removal denial, foreign replacement, anonymous denial, grants/private bucket, legacy null reads/close/update and retained reservation history. Local shims do not test actual Storage bytes or hosted Auth.
+   That directory must contain `node_modules/@electric-sql/pglite/dist/index.js`. No runtime was available during the original agent checks; the user subsequently ran this runner successfully with an external verification runtime. Default `npm test` skips this case unless the runtime environment variable is set. The runner tests missing/null/empty/malformed/nonexistent/foreign attachment denial through RPC and direct INSERT, valid creation, RPC/direct UPDATE removal denial, foreign replacement, anonymous denial, grants/private bucket, legacy null reads/close/update and retained reservation history. Local shims do not test actual Storage bytes or hosted Auth.
 3. In the intended project's Supabase SQL Editor, run the **entire** `20261011040000_required_listing_photos.sql` file once. It uses BEGIN/COMMIT. No photos, listings or history are deleted or backfilled. Do not run the local test SQL against the hosted database. Install alongside the updated app; the schema remains compatible with legacy reads, but old clients that create photo-less posts will now fail.
 4. Run [required-photos-verify.sql](required-photos-verify.sql) in the same SQL Editor. Expect all permission/private-bucket/trigger booleans true, security definer true, an empty fixed search path, and compare `installed_definition` to the migration. A nonzero historical photo-less count is allowed. These read-only checks establish installation, not behavior acceptance.
 5. Start the updated local application with `npm run dev` and perform the single bounded manual check below. Deployment is a separate user-operated step. Record isolated SQL result, migration application/read-only verification and manual result separately before marking #19 Done.
@@ -42,7 +55,7 @@ Opt-in lifecycle/student HTTP suites now need a preexisting successful caller-ow
 
 ## Local evidence
 
-`npm run lint`, `npm run typecheck`, `npm test` and `npm run build` passed October 11, 2026. Tests: 69 total, 63 passed, six skipped, zero failed (five existing opt-in suites and the unavailable isolated PostgreSQL runtime). Focused deterministic tests cover required/malformed attachment contracts, empty/invalid selection, upload failure and explicit retry, awaiting success before creation, successful-upload reuse after publish failure, selection invalidation and nullable legacy reads/drafts/PATCH. Existing photo tests still verify signature spoofing/truncation rejection and decoding/reencoding/dimension/metadata handling. Hosted installation is user-confirmed below; runtime database rejection and browser acceptance are not claimed.
+`npm run lint`, `npm run typecheck`, `npm test` and `npm run build` passed October 11, 2026. Tests: 69 total, 63 passed, six skipped, zero failed (five existing opt-in suites and the unavailable isolated PostgreSQL runtime). Focused deterministic tests cover required/malformed attachment contracts, empty/invalid selection, upload failure and explicit retry, awaiting success before creation, successful-upload reuse after publish failure, selection invalidation and nullable legacy reads/drafts/PATCH. Existing photo tests still verify signature spoofing/truncation rejection and decoding/reencoding/dimension/metadata handling. Hosted installation and bounded manual checks are user-confirmed; the isolated PostgreSQL runner subsequently passed on user execution. These are distinct from agent-run default test totals; no broader hosted runtime rejection or browser acceptance matrix is claimed.
 
 ## Changed files
 
