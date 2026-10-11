@@ -26,7 +26,7 @@ npm run check
 
 ## Configuration and authentication
 
-Required for authentication: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the shared project's API settings. Enable Supabase email/password signup and allow the local and deployed `/auth/callback` redirects, including the safe return query. Password sign-in, `/sign-up`, confirmation/resend handling, and editable Account sharing profiles are implemented. Apply the new sharing-identity migration to enable names on food cards/details and initialize names during confirmation-enabled signup; it has not yet been applied to the hosted database. See [accounts and profiles setup/testing](docs/account-profiles.md). Password recovery and OAuth UI remain separate work.
+Required for authentication: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the shared project's API settings. Enable Supabase email/password signup and allow the local and deployed `/auth/callback` redirects, including the safe return query. Password sign-in, `/sign-up`, confirmation/resend handling, and editable Account sharing profiles are implemented. Apply the new sharing-identity migration to enable names on food cards/details and initialize names during confirmation-enabled signup; it is now applied to the configured hosted database, with read-only two-account attribution/privacy acceptance passing. See [accounts and profiles setup/testing](docs/account-profiles.md). Password recovery is implemented through `/forgot-password`, the recovery callback, and an authenticated `/reset-password` page. See [password recovery setup and verification](docs/password-recovery.md). OAuth UI remains separate work.
 
 With blank Supabase configuration, the shell boots and displays the exact missing variable names; sign-in is disabled and private routes redirect to sign-in. There is no mock authentication or service-role bypass. Browser/server use the public key with user session cookies. Proxy refreshes cookies; protected pages and APIs must independently verify the user. Apply the reviewed migration and run its real database tests as described in [database setup](docs/database.md). Never expose a service-role key.
 
@@ -75,7 +75,7 @@ AI routes declare a 60-second function maximum around the 45-second Gemini timeo
 
 ## Team integration
 
-Own posts now show a Manage action, and listing details restore existing pickup status before allowing a new claim. The reservation API blocks owner claims; apply the additive no-self-reservations migration to block direct Supabase RPC attempts too. No hosted migration was applied for this change. See [reservation safety setup and testing](docs/reservation-safety.md).
+Own posts now show a Manage action, and listing details restore existing pickup status before allowing a new claim. The reservation API blocks owner claims, and the reviewed no-self-reservations migration is now applied to the configured hosted project. Direct owner/anonymous RPC denial and unchanged reservation counts were verified on October 10, 2026; new projects still need the migration. See [reservation safety setup and testing](docs/reservation-safety.md).
 
 Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/transaction review is complete; coordinate subsequent contract changes with Agent 0 and Agent 1. Use isolated branches/worktrees and focused commits. Do not change dependencies, contracts or global styles without coordination. `lib/api-client.ts` is the frontend adapter for every planned endpoint; fixtures are explicit synthetic development data and are never served by production. UI fixtures have test coordinates, not verified campus locations.
 
@@ -90,3 +90,7 @@ Initial npm audit reports five high findings in the development-only eslint-conf
 ## Foundation verification
 
 `npm run check` covers lint, typecheck, contract/photo/geo/AI policy tests and production build. Live Supabase database lifecycle and local cookie-authenticated HTTP suites passed with the user-authorized disposable demo project. Safari verified reservation, stale-page 409, cancellation, privacy, narrow layouts, geolocation denial and map tile failure fallback. Default tests skip live suites. Full evidence, repeat commands and deployment limits are in [student integration verification](docs/student-integration.md).
+
+## Current hackathon handoff
+
+See [release checks](docs/hackathon-release.md) and [the scoped completion tracker](docs/problems.md). Sharing attribution is enabled on the configured hosted database. Local navigation/sign-out and 320/390px browser checks passed; signup/recovery callback redirects were saved with user approval. The current Vercel account cannot access the existing project, so these latest local changes are not deployed.

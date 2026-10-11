@@ -1,5 +1,7 @@
 # Agent 0 session handoff — AI reliability and final demo readiness
 
+Historical handoff. Its AI reliability and final demo priorities were subsequently implemented; see [AI storage verification](ai-storage.md), [current release checks](hackathon-release.md) and [completion tracker](problems.md).
+
 Prepared 2026-10-10. Next owner: teammate Agent 3 for AI reliability, coordinating with Agent 1 for database migrations and Agent 0 for shared configuration/contracts. Agent 2 owns the remaining student/mobile/map checks.
 
 ## Start here

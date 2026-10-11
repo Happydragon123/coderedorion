@@ -1,6 +1,6 @@
 # Own food and existing pickups
 
-Issues #3 and #4 are implemented. No hosted SQL or food data was changed during implementation or verification.
+Issues #3 and #4 are implemented. The reviewed no-self-reservations migration was applied to the configured hosted Supabase project on October 10, 2026. Existing food/reservation history was preserved.
 
 ## Behavior
 
@@ -13,9 +13,9 @@ Issues #3 and #4 are implemented. No hosted SQL or food data was changed during 
 
 ## Required database migration
 
-Run the entire [20261011030000_no_self_reservations.sql](../supabase/migrations/20261011030000_no_self_reservations.sql) once in the intended Supabase project's SQL editor after existing migrations. The migration is prepared locally and **has not been applied to the hosted database**.
+The reviewed [20261011030000_no_self_reservations.sql](../supabase/migrations/20261011030000_no_self_reservations.sql) **has been applied to the configured hosted database** through its SQL editor. Do not rerun it there as pending setup. New projects still require installation after the existing food migration.
 
-The replacement `reserve_food` checks authenticated ownership after locking the listing, then preserves existing inventory/deadline checks and insertion in the same atomic transaction. This closes direct Supabase RPC attempts as well as HTTP attempts. Until installation, the new local API blocks owner claims but the original hosted RPC retains its old behavior. Existing self-reservation/demo history is preserved; no historical data or impact totals are rewritten.
+The replacement `reserve_food` checks authenticated ownership after locking the listing, then preserves existing inventory/deadline checks and insertion in the same atomic transaction. This closes direct Supabase RPC attempts as well as HTTP attempts. The hosted RPC now blocks owner claims independently of the frontend/API version. Existing self-reservation/demo history is preserved; no historical data or impact totals are rewritten.
 
 The private pickup-context endpoint and reopening behavior use existing tables/views and do not require a new migration. The earlier sharing-identity migration remains a separate setup requirement for poster names.
 
@@ -44,4 +44,16 @@ The full mutating disposable lifecycle suite (`node scripts/run-live-checks.mjs 
 
 Verification passed locally: lint, typecheck, 40 default tests (five opt-in suites skipped), production build, isolated PostgreSQL acceptance, and the read-only HTTP suite using the existing two demo accounts. No confirmation email, new food, new reservation or hosted migration was created by these checks.
 
-After migration installation, verify direct Supabase owner denial and the two-account UI flow: post → owner Manage action → another user reserves → reopen → My pickups → cancel → reopen → reserve again → collect → reopen. Check expiry and closing with an active pickup, desktop/mobile layout and keyboard focus. Hosted deployment and browser interaction remain separate verification steps.
+Direct Supabase owner denial is now verified. The target-deployment UI flow remains to be checked: post → owner Manage action → another user reserves → reopen → My pickups → cancel → reopen → reserve again → collect → reopen. Check expiry and closing with an active pickup, desktop/mobile layout and keyboard focus. Hosted deployment and browser interaction remain separate verification steps.
+
+## Hosted enforcement verification — October 10, 2026
+
+The existing signed-in dashboard matched the app's configured Supabase project. A read-only function/grant inspection showed the owner guard absent before installation, authenticated execution allowed, and anonymous execution denied. Applied the reviewed migration without changing its SQL or existing records.
+
+```sh
+node scripts/check-hosted-reservation-safety.mjs
+```
+
+This passed against actual Supabase sessions: owner RPC returned `42501`, a non-owner received the normal `P0001` lifecycle conflict on a closed post, anonymous RPC returned `42501`, and the post's reservation count remained unchanged. The runner deliberately uses an existing closed test-owned listing, so even the old function cannot create a claim during verification. No pickup codes or credentials are printed. This proves direct owner enforcement but does not replace a full concurrent/live lifecycle rehearsal.
+
+The existing read-only pickup-context HTTP suite was also run against the current local production build; hosted frontend deployment and browser lifecycle interaction remain separate checks.

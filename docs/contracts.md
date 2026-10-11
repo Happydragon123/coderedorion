@@ -13,7 +13,7 @@ Listing DTO = listing row + nested `location` + `available_portions` + optional 
 
 ## Endpoints
 
-All feature APIs require a verified session (including reads); `/api/health` is public. Identity comes from `requireUser()`, never a request user ID. Each handler validates input and output with shared schemas and uses `apiError()` for failures. Agent 1 implemented the non-AI endpoints below; AI endpoints remain assigned to Agent 3. Live database and deployed HTTP verification are pending; see [database setup](database.md).
+All feature APIs require a verified session (including reads); `/api/health` is public. Identity comes from `requireUser()`, never a request user ID. Each handler validates input and output with shared schemas and uses `apiError()` for failures. Agent 1 implemented the non-AI endpoints below; AI endpoints remain assigned to Agent 3. Earlier live database/deployed lifecycle verification passed; current account/navigation release checks and remaining gaps are recorded in [the release handoff](hackathon-release.md). New projects still require [database setup](database.md).
 
 | Method / path | Request | Success (200 unless specified) |
 | --- | --- | --- |

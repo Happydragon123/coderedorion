@@ -2,7 +2,7 @@
 
 Build plan and implementation handoffs. Foundation is implemented; feature work follows the ownership below. Selected stack: Next.js App Router, TypeScript, Supabase Auth/Postgres/Storage, Gemini. Use an existing repository's conventions if they differ. Working project name: Campus Food Rescue.
 
-Latest continuation handoff: [Agent 0 session handoff](docs/AGENT_0_HANDOFF.md). Hosted Flash-Lite photo/search/pickup verification passed; next priorities are shared AI rate limiting, search-interpretation caching, and final mobile/map checks. See that handoff for current commits, verified behavior, ownership and commands.
+Current continuation handoff: [hackathon release checks](docs/hackathon-release.md) and [completion tracker](docs/problems.md). Shared AI rate limiting/cache and earlier mobile lifecycle checks are complete. Current release work concerns signup confirmation, deployment and browser verification of newer account/navigation/map changes. [The earlier Agent 0 handoff](docs/AGENT_0_HANDOFF.md) is historical; its AI reliability queue has been completed.
 
 ## 1. Start here: human setup
 

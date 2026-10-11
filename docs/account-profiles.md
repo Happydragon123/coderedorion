@@ -1,6 +1,6 @@
 # Accounts and sharing identity
 
-Implemented October 10, 2026. The database migration has not been applied to the hosted database.
+Implemented October 10, 2026. The reviewed migration was applied to the configured hosted database on October 10, 2026. Read-only two-account attribution/privacy acceptance passed.
 
 ## Test locally
 
@@ -12,7 +12,7 @@ Existing accounts keep their current names (including the original `Campus membe
 
 ## Required database setup for poster names
 
-The code includes [20261011020000_sharing_identity.sql](../supabase/migrations/20261011020000_sharing_identity.sql). Review and run the entire file once in the intended Supabase project's SQL editor, after the existing food and location migrations. This is a database administrator step, independent of pushing the local website changes. It has **not** been applied by this change.
+The code includes [20261011020000_sharing_identity.sql](../supabase/migrations/20261011020000_sharing_identity.sql). Review and run the entire file once in the intended Supabase project's SQL editor, after the existing food and location migrations. This is a database administrator step, independent of pushing the local website changes. It is installed in the configured hosted project; new projects still need this setup.
 
 The migration adds `food_listing_sharers(uuid[])`, an authenticated-only function that returns only listing ID, display name and organization for requested existing posts. It also initializes new profiles from validated signup metadata. Profile RLS stays self-only; the listing availability view and food lifecycle stay unchanged. Previously deployed code can continue reading the same view.
 
@@ -20,7 +20,7 @@ Before migration installation, Account editing and manual food flows still work 
 
 ## Email confirmation setup
 
-Enable email/password signup in Supabase Auth. Allow the local `/auth/callback` redirect URL for the port you use, as well as the deployed callback when eventually deploying. The app passes a safe local `next` destination in the callback query string; ensure the redirect allowlist permits it. Use an appropriate development-only localhost pattern if needed, and specific HTTPS URLs for production. No Auth settings were changed here.
+Enable email/password signup in Supabase Auth. Allow the local `/auth/callback` redirect URL for the port you use, as well as the deployed callback when eventually deploying. The app passes a safe local `next` destination in the callback query string; ensure the redirect allowlist permits it. Use an appropriate development-only localhost pattern if needed, and specific HTTPS URLs for production. Callback query allowlist entries were saved with explicit user approval on October 10, 2026 for the deployed origin and localhost ports 3000/3001. Signup email delivery and a successful confirmation round trip remain unverified.
 
 Default PKCE confirmation links must be opened in the browser where signup/resend occurred. The callback also accepts `token_hash` with `type=email` or `type=signup` for a configured server-side confirmation template. A template can use `{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email` because this app's RedirectTo already includes `?next=...`; this supports confirmation without the original PKCE verifier. Review template/allowlist settings before changing the hosted project. Failed/expired links lead to sign-in with a resend option. Provider errors, disabled signup and email limits are shown rather than reported as success.
 
@@ -48,4 +48,6 @@ node scripts/verify-sharing-identity.mjs $identityVerifyRoot
 
 The runner uses in-memory PostgreSQL, a minimal Supabase auth/storage shim, the real food/location/profile migrations and [rollback acceptance checks](../scripts/sharing-identity.local.sql). Checks passed for metadata defaults/normalization, own-profile edits, other-profile denial, email denial, RPC grants, authenticated identity, requested-listing-only results, ID bounds and unchanged availability view. The shim does not test Auth email delivery or actual hosted migration installation. Never run the rollback SQL script against the hosted project.
 
-Read-only local HTTP verification passed against the configured demo Auth/DB. Email delivery, a new-account confirmation round trip, two-account poster-name rendering after migration installation, and desktop/mobile browser interaction still need verification. Password recovery remains separate backlog work.
+Read-only local HTTP verification passed against the configured demo Auth/DB. Email delivery, a new-account confirmation round trip, two-account browser poster-name rendering, and desktop/mobile browser interaction still need verification. Password recovery is now implemented; see [setup and verification](password-recovery.md).
+
+Hosted acceptance: `node scripts/check-hosted-sharing-identity.mjs` uses existing demo accounts and posts, compares returned attribution to saved identity, and checks profile privacy without writes or emails. Passed October 10, 2026. See [release checks](hackathon-release.md).
