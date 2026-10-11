@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Student Center South",
+    "latitude": 29.7200622,
+    "longitude": -95.3410239,
+    "google_maps_url": "https://www.google.com/maps/place/Student+Center+South/@29.7200622,-95.3435988,17z/data=!3m2!4b1!5s0x8640be5a14605ebd:0x699b88500f18f1c1!4m6!3m5!1s0x8640be5a378d489b:0x2fbf3e96e13ad6ca!8m2!3d29.7200622!4d-95.3410239!16s%2Fg%2F11_tpzvt0?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Student Center North",
+    "latitude": 29.7208509,
+    "longitude": -95.3407878,
+    "google_maps_url": "https://www.google.com/maps/place/Student+Center+North/@29.7208509,-95.3433627,17z/data=!4m6!3m5!1s0x8640be5a13bf633f:0xf34de69146bacb09!8m2!3d29.7208509!4d-95.3407878!16s%2Fg%2F11c594k13l?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "CBB (Classroom and Business Building)",
+    "latitude": 29.7215259,
+    "longitude": -95.3404073,
+    "google_maps_url": "https://www.google.com/maps/place/Classroom+and+Business+Building/@29.7208509,-95.3433627,17z/data=!4m6!3m5!1s0x8640be5a16a63e39:0x942d5cbac1d59b1a!8m2!3d29.7215259!4d-95.3404073!16s%2Fg%2F11byck36km?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Melcher Hall",
+    "latitude": 29.7210757,
+    "longitude": -95.339903,
+    "google_maps_url": "https://www.google.com/maps/place/Melcher+Hall/@29.7215259,-95.3429822,17z/data=!4m6!3m5!1s0x8640bfac6704896d:0xd3ac97f07af27f80!8m2!3d29.7210757!4d-95.339903!16s%2Fg%2F11vcl50v45?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Engineering Building 1",
+    "latitude": 29.7228562,
+    "longitude": -95.3413869,
+    "google_maps_url": "https://www.google.com/maps/place/Engineering+Building+1-Cullen+College+of+Engineering/@29.7228562,-95.3439618,17z/data=!3m1!4b1!4m6!3m5!1s0x8640be59ddbfffff:0xf65ddb544650f173!8m2!3d29.7228562!4d-95.3413869!16s%2Fg%2F1ym82kz9j?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "L2D2 Engineering Lecture Hall",
+    "latitude": 29.7227294,
+    "longitude": -95.3408917,
+    "google_maps_url": "https://www.google.com/maps/place/L2D2+Engineering+Lecture+Hall/@29.7228562,-95.3439618,17z/data=!4m10!1m2!2m1!1sengineering+building+2+uh!3m6!1s0x8640bf288b5e4641:0x9450ea472ca232fd!8m2!3d29.7227294!4d-95.3408917!15sChllbmdpbmVlcmluZyBidWlsZGluZyAyIHVokgEVdW5pdmVyc2l0eV9kZXBhcnRtZW504AEA!16s%2Fg%2F11h6wglmyk?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "M.D. Anderson Library",
+    "latitude": 29.721084,
+    "longitude": -95.342048,
+    "google_maps_url": "https://www.google.com/maps/place/M.D.+Anderson+Library/@29.7232568,-95.3462471,17z/data=!4m6!3m5!1s0x8640c0748ba2522f:0x2a3f0ce5297e9c3a!8m2!3d29.721084!4d-95.342048!16s%2Fm%2F04183nz?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "Science & Engineering Classroom Building (SEC)",
+    "latitude": 29.7233249,
+    "longitude": -95.346109,
+    "google_maps_url": "https://www.google.com/maps/place/Science+%26+Engineering+Classroom+Building+(SEC)/@29.721084,-95.3446229,17z/data=!4m14!1m7!3m6!1s0x8640c0748ba2522f:0x2a3f0ce5297e9c3a!2sM.D.+Anderson+Library!8m2!3d29.721084!4d-95.342048!16s%2Fm%2F04183nz!3m5!1s0x8640be5689fcfe11:0x1e4f121759fbcfa1!8m2!3d29.7233249!4d-95.346109!16s%2Fg%2F11bwpzn9qb?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  },
+  {
+    "name": "A.D. Bruce Religion Center",
+    "latitude": 29.719255,
+    "longitude": -95.3452524,
+    "google_maps_url": "https://www.google.com/maps/place/A.D.+Bruce+Religion+Center+at+the+University+of+Houston/@29.7197767,-95.3445519,17.38z/data=!4m14!1m7!3m6!1s0x8640c0748ba2522f:0x2a3f0ce5297e9c3a!2sM.D.+Anderson+Library!8m2!3d29.721084!4d-95.342048!16s%2Fm%2F04183nz!3m5!1s0x8640be510953f395:0x591f141fb5e402d1!8m2!3d29.719255!4d-95.3452524!16s%2Fg%2F1tdb4ntd?entry=ttu&g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D"
+  }
+]
