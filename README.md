@@ -1,96 +1,123 @@
 # Campus Food Rescue
 
-Agent 0 foundation for the [build plan](campus-food-rescue-handoffs.md). Next.js App Router, TypeScript, Supabase cookie sessions, Zod contracts, and Leaflet dependencies. Agent 1 implemented database migrations, RLS, private photo storage, authenticated food APIs, and atomic lifecycle operations. Agent 2’s protected student feed, details, pickups and impact interface is integrated. Agent 3’s organizer posting, management and Gemini endpoints are integrated. Agent 0 and Agent 1 froze the reviewed contracts; see [docs/contracts.md](docs/contracts.md) and [database setup](docs/database.md).
+**Good food. Shared locally.**
+
+Campus Food Rescue connects surplus food with people nearby. Built around the University of Houston campus, it gives students and campus organizers a place to share available food, find a pickup location, and reserve a portion before the pickup window ends.
+
+The goal is simple: make it easier for extra food from campus events and gatherings to reach someone who can enjoy it.
+
+## How it works
+
+### Share surplus food
+
+1. Create an account or sign in, then open **Share food**.
+2. Add a food photo and description. Optional AI assistance can help draft the title and description.
+3. Choose a campus pickup location and enter the number of portions, pickup instructions, and deadline.
+4. Review the details and add any dietary, ingredient, or allergen information you can confirm before publishing.
+5. Use **Manage food** to track reservations and confirm collection when someone presents their pickup code.
+
+The person sharing food reviews and publishes every listing. AI assistance never publishes a post automatically.
+
+### Find and collect food
+
+1. Sign in and browse the food feed, using a campus landmark or optional device location to find nearby options.
+2. Filter by location and dietary preference, or describe what you want in the natural-language search.
+3. Open a listing to check its photo, available portions, pickup instructions, and deadline.
+4. Reserve one portion and find your pickup code in **My pickups**.
+5. Arrive before the deadline and show your code to the person sharing the food, who confirms the collection.
+
+If your plans change, you can cancel an uncollected reservation. The same account can both share food and reserve portions from other people.
+
+## Features
+
+- **Food listings:** Photos, descriptions, portion counts, pickup deadlines, and sharing names help people understand what is being offered.
+- **Campus pickup map:** Nine verified University of Houston locations provide familiar meeting landmarks and external directions. The home map is visible before sign-in; food availability appears for signed-in users.
+- **One-portion reservations:** Each person reserves one portion per listing, with a private pickup code for collection.
+- **Pickup management:** People sharing food can view reservations, close a listing to new claims, and confirm handoffs.
+- **AI-assisted posting:** Google Gemini can suggest an editable title and description from a photo or written description. The person posting supplies the location, quantity, pickup instructions, and deadline.
+- **Natural-language search:** Requests such as “vegetarian food near the library” are translated into supported filters and matched against current listings.
+- **Dietary information:** Listings support vegetarian, vegan, halal, and gluten-free tags supplied by the person sharing the food.
+- **Campus impact:** The impact page distinguishes posted portions, active reservations, and confirmed collections.
+- **Account profiles:** Members can update their display name and optional organization name, which appear on their food posts.
+
+## What happens to a reservation?
+
+Reservations are available only while a listing is open, has portions remaining, and has a future pickup deadline. A person cannot reserve their own listing.
+
+Cancelling a reservation makes its portion available again when the listing is still open and within its pickup window. Closing a listing stops new reservations while allowing existing reservations to be collected before the deadline. Once the deadline passes, uncollected reservations expire.
+
+Only the person sharing the food can confirm collection using the pickup code. A confirmed collection is counted once, even if confirmation is repeated.
+
+## Understanding food information and impact
+
+Dietary tags and ingredient or allergen notes come from the person posting. Missing information means it is unconfirmed. AI does not verify ingredients, allergens, or food safety, and a dietary tag is not an allergy-safe guarantee.
+
+Map pins identify pickup landmarks; they do not guarantee food is available at every location. Displayed distances are straight-line distances, and pickup times use the campus time zone, **America/Chicago**.
+
+Impact totals count confirmed collections separately from posts and reservations. Weight and meal-equivalent figures are estimates based on fixed portion assumptions, rather than measured food weight. Any pickups made with synthetic demo listings are simulations and should not be presented as real food rescued.
+
+## Quick walkthrough
+
+Use two accounts to try the complete sharing and pickup flow:
+
+1. With the first account, publish a clearly labeled demo listing with a permitted matching photo, one portion, a campus location, and a future deadline.
+2. With the second account, find the listing and reserve its portion.
+3. Open **My pickups** to view the pickup code.
+4. With the first account, enter that code in **Manage food** to confirm collection.
+5. View **Impact** to see the confirmed collection reflected in the totals.
+
+Demo listings should explicitly state that no real food is offered and no travel is needed. Existing demo posts may have expired; check their deadlines before a walkthrough.
+
+## Technologies
+
+| Technology | Role |
+| --- | --- |
+| Next.js and React | Web application and user interface |
+| TypeScript | Typed application code |
+| Supabase | Accounts, database, and private photo storage |
+| Google Gemini | Optional listing drafts and natural-language search |
+| Leaflet and OpenStreetMap data | Campus maps |
+| Zod | Validation of application data |
 
 ## Run locally
 
-Use Node 22+ and npm. The lockfile is the shared dependency baseline.
+Use **Node.js 22 or later** and **npm**.
 
 ```sh
 npm ci
-cp .env.example .env.local # only if .env.local does not already exist
+```
+
+If you do not already have a `.env.local` file, copy the environment template:
+
+```sh
+cp .env.example .env.local
+```
+
+Add your configuration to `.env.local`:
+
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase public application key |
+| `GEMINI_API_KEY` | Optional server-side key for AI features |
+| `GEMINI_MODEL` | Model identifier available to your Gemini account |
+| `NEXT_PUBLIC_MAP_TILE_URL` | Optional tile provider for the food-feed map |
+| `NEXT_PUBLIC_MAP_ATTRIBUTION` | Attribution required by the selected tile provider |
+
+Supabase must have the project's database migrations, private photo storage, verified pickup locations, and authentication redirects configured. See [database setup](docs/database.md), [account setup](docs/account-profiles.md), and [required listing photos](docs/required-photos.md) for detailed instructions.
+
+```sh
 npm run dev
 ```
 
-Open http://localhost:3000. `.env.local` is ignored by Git. Fill it locally; never commit keys. Restart the dev server after changing environment variables.
+Open [localhost:3000](http://localhost:3000). Restart the server after changing environment variables. Keep `.env.local` and private provider keys out of version control.
+
+AI features are optional: manual posting and standard filters work without Gemini. Manual campus location selection remains available when device location is denied. The food list and directions remain usable without map tiles, and the home campus map needs no tile-provider key.
+
+To run the project's local checks:
 
 ```sh
-npm run lint
-npm run typecheck
-npm test
-npm run build
-npm start
-# or all validation steps:
 npm run check
 ```
 
-## Configuration and authentication
-
-Required for authentication: `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the shared project's API settings. Enable Supabase email/password signup and allow the local and deployed `/auth/callback` redirects, including the safe return query. Password sign-in, `/sign-up`, confirmation/resend handling, and editable Account sharing profiles are implemented. Apply the new sharing-identity migration to enable names on food cards/details and initialize names during confirmation-enabled signup; it is now applied to the configured hosted database, with read-only two-account attribution/privacy acceptance passing. See [accounts and profiles setup/testing](docs/account-profiles.md). Password recovery is implemented through `/forgot-password`, the recovery callback, and an authenticated `/reset-password` page. See [password recovery setup and verification](docs/password-recovery.md). OAuth UI remains separate work.
-
-With blank Supabase configuration, the shell boots and displays the exact missing variable names; sign-in is disabled and private routes redirect to sign-in. There is no mock authentication or service-role bypass. Browser/server use the public key with user session cookies. Proxy refreshes cookies; protected pages and APIs must independently verify the user. Apply the reviewed migration and run its real database tests as described in [database setup](docs/database.md). Never expose a service-role key.
-
-Set `GEMINI_API_KEY` and `GEMINI_MODEL` locally for server-side photo-assisted drafting and typed natural-language search. The environment template leaves both blank. A minimal server-side text-generation request has been verified against the saved local configuration; Agent 3 implements the draft and search endpoints; the student feed now connects natural-language search to the grounded endpoint. Verify the selected model and account capabilities in each environment rather than assuming IDs. Manual posting and standard filters remain usable without Gemini.
-
-## Shared AI admission and interpretation cache
-
-Apply Agent 1's AI reliability migration before enabling AI routes. Both endpoints share atomic admission under the authenticated Supabase session. Limits live in the administrator-owned `public.ai_runtime_config` singleton; clients cannot set budgets. No extra credentials or dependencies are needed. Defaults are 6 requests/minute and 100/day per user, 12/minute and 450/day per project, one concurrent request/user and two/project. These are application budgets, not guaranteed provider quotas; tune them below the selected model's actual project quota.
-
-An administrator can inspect/change settings through the database dashboard or an owner connection:
-
-```sql
-SELECT * FROM public.ai_runtime_config WHERE singleton = true;
-UPDATE public.ai_runtime_config
-SET user_per_minute = 6, user_per_day = 100,
-    project_per_minute = 12, project_per_day = 450,
-    user_concurrency = 1, project_concurrency = 2,
-    lease_seconds = 60, provider_cooldown_seconds = 3600,
-    cache_ttl_seconds = 300, cache_max_entries = 1000
-WHERE singleton = true;
-```
-
-Lease expiration recovers capacity after interrupted requests. Provider throttling starts a shared cooldown (one hour by default) rather than triggering automatic retries. AI rate-limit errors preserve `{error:{code,message}}` and include integer `Retry-After` seconds plus `X-AI-Rate-Limit-Source: app` or `provider`; the shared client exposes these as `ApiClientError.options`. AI admission fails closed when shared storage is unavailable. Manual posting and standard filters remain available.
-
-Search caches validated filter interpretations for five minutes, with a maximum of 1,000 entries by default. It retrieves inventory under the current authenticated session on every request and builds summaries from those fresh rows. Cache identity accounts for query/context, model, policy and verified landmarks; relative-time queries need an explicit time-aware policy or bypass caching. Cache storage contains no listing responses, photo URLs, reservations or pickup codes. Do not clear provider cooldown just to retry an exhausted quota; restore access only after checking the provider quota/reset.
-
-## Maps
-
-The landing page includes a University of Houston campus map using the nine administrator-verified locations in `docs/verified-pickup-spots.json`. Large red location pins show every verified pickup location, including before sign-in. Pins identify pickup locations rather than asserting food availability. Signed-in users see available portions on the pins and food links in their popups; an empty location says no food is currently posted there. Directions and an accessible location list are available to everyone. Inventory refreshes every minute while the page is visible and when the window regains focus; expired posts lose their availability counts on the 15-second clock update.
-
-The landing map draws a local OpenStreetMap geometry snapshot, retaining buildings, green space, roads and paths without parking symbols, POI logos or road shields. It needs no map-provider key or tile configuration. Data is licensed under ODbL with visible attribution; see [basemap source and regeneration](components/home/campus-basemap-source.md). Food APIs and reservations retain their existing sign-in requirements; no anonymous database grants or hosted settings were changed.
-
-For the separate student-feed map, OpenStreetMap tiles can be enabled in the ignored `.env.local` file with `NEXT_PUBLIC_MAP_TILE_URL=https://tile.openstreetmap.org/{z}/{x}/{y}.png` and `NEXT_PUBLIC_MAP_ATTRIBUTION='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'`. Restart the dev server after changing these values. Use normal browser caching, visible attribution and no bulk fetching, per the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/). Hosted map configuration is unchanged; choose and verify a provider appropriate to deployment traffic before enabling it there. Blank settings keep the feed's list and directions usable.
-
-Leaflet 1.9 + React Leaflet 5 selected for provider-independent raster tiles. Agent 2 imports `leaflet/dist/leaflet.css` and loads map components client-side with SSR disabled. Both `NEXT_PUBLIC_MAP_TILE_URL` (`{z}/{x}/{y}` template) and `NEXT_PUBLIC_MAP_ATTRIBUTION` are needed before enabling tiles. No default provider or fabricated campus coordinates. Choose an authorized provider, verify its plan/domain restrictions, attribution and browser caching requirements; keys in public tile URLs are public and should be domain-restricted. Keep list view usable when tiles are unavailable.
-
-Public OSM tiles require visible attribution, appropriate caching, and prohibit bulk/offline prefetch; they are not an unlimited production backend. Sources: [OSM tile policy](https://operations.osmfoundation.org/policies/tiles/), [React Leaflet setup](https://react-leaflet.js.org/docs/start-installation/). External directions/manual landmarks can ship before maps.
-
-## Deployment
-
-Deploy this repository as a Next.js project to Vercel or another Node-compatible Next.js host. Use `npm ci`, build `npm run build`; self-host with `npm start` and platform-provided PORT. Use Node 22+. Add environment variables in host settings (public variables are embedded at build time), set Supabase Site URL/redirect allowlist for the final HTTPS origin, rebuild, and check `/` and `/api/health`. Health reports process liveness and whether auth variables are present, not credential validity/database readiness. Preview origins need separate callback allowlisting.
-
-Agent 1 owns migrations. Follow [database setup](docs/database.md) when preparing a new project. The configured disposable demo project has the migration and verified landmark available, and live sign-in has passed. The existing deployment is https://coderedorion.vercel.app. See [student integration verification](docs/student-integration.md) for remaining hosted checks.
-
-AI routes declare a 60-second function maximum around the 45-second Gemini timeout; verify the deployed function settings. Read [search integration and rehearsal](docs/search-integration.md) for current evidence and limits.
-
-## Team integration
-
-Own posts now show a Manage action, and listing details restore existing pickup status before allowing a new claim. The reservation API blocks owner claims, and the reviewed no-self-reservations migration is now applied to the configured hosted project. Direct owner/anonymous RPC denial and unchanged reservation counts were verified on October 10, 2026; new projects still need the migration. See [reservation safety setup and testing](docs/reservation-safety.md).
-
-Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/transaction review is complete; coordinate subsequent contract changes with Agent 0 and Agent 1. Use isolated branches/worktrees and focused commits. Do not change dependencies, contracts or global styles without coordination. `lib/api-client.ts` is the frontend adapter for every planned endpoint; fixtures are explicit synthetic development data and are never served by production. UI fixtures have test coordinates, not verified campus locations.
-
-Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
-
-Implemented: database/RLS/private storage migration, authenticated non-AI endpoints, atomic lifecycle RPCs, bounded image validation/reencoding, protected student interface, and opt-in database and cookie-authenticated HTTP tests. Hosted organizer/photo/search lifecycle and separate-session student search-to-pickup checks passed after switching to `gemini-3.5-flash-lite`; see [the verification report](docs/search-integration.md). AI drafts require manual entry of location, quantity, pickup instructions and deadline. Shared AI admission/cache migration, live storage acceptance and bounded hosted reliability checks passed. Hosted Chrome verification passed for all seven protected pages at 320/390/768px, native geolocation denial with manual selection, and the two-session publish/search/reserve/cancel/re-reserve/close/collect flow; see [demo readiness](components/organizer/DEMO_READINESS.md) for CSS fixes, browser coverage and simulated demo totals. The landing-page campus map is enabled for local testing; hosted map settings remain unchanged.
-
-## Dependency audit
-
-Initial npm audit reports five high findings in the development-only eslint-config-next → fast-glob → micromatch → braces chain (deeply nested glob patterns). The published braces version is 3.0.3 with no patched release available at setup time. npm suggests downgrading Next lint config across major versions; that is not applied. Production dependency audit is checked separately. Revisit the lint chain when a compatible fix is published.
-
-## Foundation verification
-
-`npm run check` covers lint, typecheck, contract/photo/geo/AI policy tests and production build. Live Supabase database lifecycle and local cookie-authenticated HTTP suites passed with the user-authorized disposable demo project. Safari verified reservation, stale-page 409, cancellation, privacy, narrow layouts, geolocation denial and map tile failure fallback. Default tests skip live suites. Full evidence, repeat commands and deployment limits are in [student integration verification](docs/student-integration.md).
-
-## Current hackathon handoff
-
-See [release checks](docs/hackathon-release.md) and [the scoped completion tracker](docs/problems.md). Sharing attribution is enabled on the configured hosted database. Local navigation/sign-out and 320/390px browser checks passed; signup/recovery callback redirects were saved with user approval. The current Vercel account cannot access the existing project, so these latest local changes are not deployed.
+This runs linting, type checking, tests, and a production build. Tests that require a live database are opt-in.
