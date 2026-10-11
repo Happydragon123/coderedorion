@@ -39,5 +39,5 @@
 .count strong { font-size: 1.3rem; margin-right: .3rem; }
 .collection { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--line); max-width: 480px; }
 .collection h3 { margin: 0; font-size: 1.1rem; }
-@media (max-width: 850px) { .shareLayout { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; } .assistancePanel { order: -1; } }
+@media (max-width: 850px) { .shareLayout { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; } .assistancePanel { order: -1; } .tip { display: none; } }
 @media (max-width: 480px) { .formSection, .assistancePanel, .listing { padding: 1.1rem; } .publish button { width: 100%; } }
