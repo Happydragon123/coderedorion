@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import * as c from '@/lib/contracts';
 import { requireUser } from '@/lib/server/auth';
 import { apiError, readJson, ApiError } from '@/lib/server/api';
-import { databaseError, listing, listings, reservations, rpc } from '@/lib/data/food';
+import { databaseError, listing, listingOwnership, listings, reservations, rpc } from '@/lib/data/food';
 export type Context = { params: Promise<{ id?: string }> };
 export function handler(action: (request: Request, context: Context) => Promise<NextResponse>) {
   return async (request: Request, context: Context) => { try { return await action(request, context); } catch (error) { return apiError(error); } };
@@ -33,7 +33,10 @@ export const listingPatch = handler(async (request, context) => {
   return NextResponse.json(c.listingResponseSchema.parse({ listing: await listing(supabase, id) }));
 });
 export const reservePost = handler(async (_, context) => {
-  const { supabase } = await requireUser(); const id = c.idSchema.parse((await context!.params).id);
+  const { supabase, user } = await requireUser(); const id = c.idSchema.parse((await context!.params).id);
+  // Protect local API use against the original database before migration install.
+  // The new database function independently enforces this after taking its lock.
+  if (await listingOwnership(supabase, id, user.id)) throw new ApiError(403, 'FORBIDDEN', 'You cannot reserve food you posted.');
   return NextResponse.json(c.reservationResponseSchema.parse({ reservation: await rpc(supabase, 'reserve_food', { target: id }) }), { status: 201 });
 });
 export const cancelPost = handler(async (_, context) => {

@@ -32,6 +32,7 @@ export const api = {
     return request(`/api/listings?${query}`, c.listingsResponseSchema);
   },
   listing: (listingId: string) => request(`/api/listings/${id(listingId)}`, c.listingResponseSchema),
+  pickupContext: (listingId: string) => request(`/api/listings/${id(listingId)}/pickup-context`, c.pickupContextResponseSchema),
   createListing: (body: c.CreateListing) => request('/api/listings', c.listingResponseSchema, json('POST', c.createListingSchema.parse(body))),
   patchListing: (listingId: string, body: c.PatchListing) => request(`/api/listings/${id(listingId)}`, c.listingResponseSchema, json('PATCH', c.patchListingSchema.parse(body))),
   reserve: (listingId: string) => request(`/api/listings/${id(listingId)}/reservations`, c.reservationResponseSchema, { method: 'POST' }),

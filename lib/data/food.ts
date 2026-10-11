@@ -5,6 +5,9 @@ import { idSchema, listingFiltersSchema, listingSchema, reservationSchema, shari
 import { ApiError } from '@/lib/server/api';
 export function databaseError(error: { code?: string; message?: string } | null) {
   if (!error) return;
+  if (error.code === '42501' && error.message === 'Cannot reserve your own food.') {
+    throw new ApiError(403, 'FORBIDDEN', 'You cannot reserve food you posted.');
+  }
   const codes = { '42501': [403, 'FORBIDDEN', 'This action is not permitted.'], P0002: [404, 'NOT_FOUND', 'Record not found.'], P0001: [409, 'CONFLICT', 'Inventory or lifecycle conflict.'], '23505': [409, 'CONFLICT', 'Duplicate reservation.'], '23514': [422, 'INVALID_INPUT', 'Invalid listing values.'], '23503': [422, 'INVALID_INPUT', 'Invalid reference.'], '22P02': [422, 'INVALID_INPUT', 'Invalid values.'] } as const;
   const match = codes[error.code as keyof typeof codes];
   if (match) throw new ApiError(match[0], match[1], match[2]);
@@ -59,4 +62,26 @@ export async function listing(db: SupabaseClient, id: string) {
 export async function reservations(db: SupabaseClient) {
   const { data, error } = await db.from('private_reservations').select('*').order('created_at', { ascending: false }); databaseError(error);
   return (data ?? []).map(row => reservationSchema.parse(row));
+}
+
+export async function listingOwnership(db: SupabaseClient, listingId: string, userId: string) {
+  const id = idSchema.parse(listingId), user = idSchema.parse(userId);
+  const { data, error } = await db.from('listings').select('organizer_id').eq('id', id).maybeSingle();
+  databaseError(error);
+  if (!data) throw new ApiError(404, 'NOT_FOUND', 'Listing not found.');
+  return idSchema.parse(data.organizer_id) === user;
+}
+
+export async function pickupContext(db: SupabaseClient, listingId: string, userId: string) {
+  const id = idSchema.parse(listingId), user = idSchema.parse(userId);
+  const is_owner = await listingOwnership(db, id, user);
+  const ownRows = () => db.from('private_reservations').select('*')
+    .eq('listing_id', id).eq('student_id', user)
+    .order('created_at', { ascending: false }).order('id', { ascending: false }).limit(1);
+  const current = await ownRows().in('status', ['reserved', 'collected']).maybeSingle();
+  databaseError(current.error);
+  if (current.data) return { is_owner, reservation: reservationSchema.parse(current.data) };
+  const previous = await ownRows().in('status', ['cancelled', 'expired']).maybeSingle();
+  databaseError(previous.error);
+  return { is_owner, reservation: previous.data ? reservationSchema.parse(previous.data) : null };
 }

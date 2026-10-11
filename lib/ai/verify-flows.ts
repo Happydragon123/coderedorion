@@ -65,14 +65,16 @@ async function main() {
     console.log('PASS manual: post → feed → reserve → cancel → reserve → close → collect; duplicate counts once and foreign mutations fail.');
 
     const race=await create({...payload,title:'DEMO — last-portion race rehearsal'});
-    const raceResults=await Promise.all([student.send(`/api/listings/${race.id}/reservations`,'POST'),organizer.send(`/api/listings/${race.id}/reservations`,'POST')]);
+    const ownerDenied=await checked(await organizer.send(`/api/listings/${race.id}/reservations`,'POST'),c.errorEnvelopeSchema,403);
+    assert.equal(ownerDenied.error.code,'FORBIDDEN');
+    const raceResults=await Promise.all([student.send(`/api/listings/${race.id}/reservations`,'POST'),student.send(`/api/listings/${race.id}/reservations`,'POST')]);
     assert.deepEqual(raceResults.map(row=>row.status).sort(),[201,409]);
     for(let i=0;i<raceResults.length;i++) if(raceResults[i].status===201) {
       const {reservation}=c.reservationResponseSchema.parse(await raceResults[i].json());
-      const client=i===0 ? student : organizer; reservations.push({id:reservation.id,client});
-      await checked(await client.send(`/api/reservations/${reservation.id}/cancel`,'POST'),c.reservationResponseSchema);
+      reservations.push({id:reservation.id,client:student});
+      await checked(await student.send(`/api/reservations/${reservation.id}/cancel`,'POST'),c.reservationResponseSchema);
     }
-    console.log('PASS inventory: two distinct accounts raced for one portion; exactly one reservation succeeded.');
+    console.log('PASS inventory: owner denied; simultaneous requests from one student consumed exactly one portion.');
 
     if (process.argv.includes('--without-ai')) {
       const unavailable = await checked(await organizer.send('/api/ai/search','POST',{query:'food'}),c.errorEnvelopeSchema,503);

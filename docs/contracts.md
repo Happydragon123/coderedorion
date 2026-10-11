@@ -20,6 +20,7 @@ All feature APIs require a verified session (including reads); `/api/health` is 
 | GET /api/locations | none | `{locations: Location[]}` |
 | GET /api/listings | `listingFiltersSchema` query | `{listings: Listing[]}` |
 | GET /api/listings/:id | UUID | `{listing}` |
+| GET /api/listings/:id/pickup-context | UUID | `{is_owner,reservation: Reservation \| null}` (caller's pickup only) |
 | POST /api/listings | `createListingSchema` JSON | `{listing}` (201) |
 | PATCH /api/listings/:id | `patchListingSchema` JSON | `{listing}` |
 | POST /api/listings/:id/reservations | no body | `{reservation}` (201) |
@@ -44,7 +45,9 @@ Errors: `{error:{code,message}}`. 401 UNAUTHENTICATED; 403 FORBIDDEN; 404 NOT_FO
 
 ## Reviewed database invariants
 
-Availability = total minus collected minus reserved with future deadline (database time); stale reserved rows are effectively expired without a scheduler. Reserve/cancel/collect lock the listing first and run atomically. Only one active/collected reservation per student/listing; cancelled reservations may be replaced. Reserve requires open/future listing. Close blocks new claims but honors existing claims until deadline. No deadline change after any reservation; total cannot fall below reserved+collected commitments. Cancel releases inventory only while open/future. Only organizer collects, scoped to listing and random unique pickup code, before deadline; retries cannot count twice. Codes are never public lookup credentials. RLS must protect codes and storage. Impact counts only collected as rescued, never fixture inventory.
+Availability = total minus collected minus reserved with future deadline (database time); stale reserved rows are effectively expired without a scheduler. Reserve/cancel/collect lock the listing first and run atomically. Only one active/collected reservation per student/listing; cancelled reservations may be replaced. Reserve requires open/future listing and the caller must not own the listing. Agent 0/Agent 1 coordinated the self-reservation rule and private pickup-context extension on 2026-10-10. The API denies owner claims with 403; the reviewed additive migration repeats the ownership check after taking the listing lock. Close blocks new claims but honors existing claims until deadline. No deadline change after any reservation; total cannot fall below reserved+collected commitments. Cancel releases inventory only while open/future. Only organizer collects, scoped to listing and random unique pickup code, before deadline; retries cannot count twice. Codes are never public lookup credentials. RLS must protect codes and storage. Impact counts only collected as rescued, never fixture inventory.
+
+Pickup context verifies session and listing access, then filters `private_reservations` by caller UUID and listing UUID. A current reserved/collected pickup takes priority; otherwise return the newest cancelled/expired history, or null. All context responses use `Cache-Control: private, no-store`. The listing owner does not receive other people's reservations through this endpoint even though organizer RLS permits management reads elsewhere. Ownership and private pickups are not added to public Listing DTOs. Setup/testing: [reservation safety](reservation-safety.md).
 
 ## Agent 0 / Agent 1 implementation decisions
 

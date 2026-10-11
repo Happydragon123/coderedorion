@@ -40,4 +40,14 @@ export function useClock() {
 export function deadline(value: string) { return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date(value)); }
 export function availability(listing: Listing, now: number) { return Date.parse(listing.pickup_deadline) <= now ? 'Expired' : listing.status === 'closed' ? 'Closed' : listing.available_portions === 0 ? 'Sold out' : `${listing.available_portions} portions available`; }
 export function Dietary({ listing }: { listing: Listing }) { return <div className={styles.tags}>{listing.dietary_tags.length ? listing.dietary_tags.map(tag => <span className={styles.tag} key={tag}>{dietaryLabels[tag]} · organizer-confirmed</span>) : <span>Dietary information unknown / unconfirmed</span>}</div>; }
-export function FoodCard({ listing, now }: { listing: Listing; now: number }) { return <article className={styles.card}><span className={styles.status} data-state={listing.status !== 'open' || listing.available_portions === 0 || Date.parse(listing.pickup_deadline) <= now ? 'inactive' : 'available'}>{availability(listing, now)}</span><h2><Link href={`/listings/${listing.id}`}>{listing.title}</Link></h2><SharerIdentity identity={listing.sharer}/><dl className={styles.cardMeta}><dt>Pickup landmark</dt><dd>{listing.location.name}</dd><dt>Pickup by</dt><dd>{deadline(listing.pickup_deadline)}</dd></dl><Dietary listing={listing}/><div className={styles.cardFooter}><Link href={`/listings/${listing.id}`}>View food →</Link><a href={directionsUrl(listing.location)} target="_blank" rel="noreferrer">Open in Google Maps</a>{listing.distance_m !== undefined && <small>{formatDistance(listing.distance_m)}</small>}</div></article>; }
+export function FoodCard({ listing, now, viewerId }: { listing: Listing; now: number; viewerId?: string }) {
+  const own = viewerId === listing.organizer_id;
+  return <article className={styles.card}>
+    {own && <p className="eyebrow">Your listing</p>}
+    <span className={styles.status} data-state={listing.status !== 'open' || listing.available_portions === 0 || Date.parse(listing.pickup_deadline) <= now ? 'inactive' : 'available'}>{availability(listing, now)}</span>
+    <h2><Link href={`/listings/${listing.id}`}>{listing.title}</Link></h2><SharerIdentity identity={listing.sharer}/>
+    <dl className={styles.cardMeta}><dt>Pickup landmark</dt><dd>{listing.location.name}</dd><dt>Pickup by</dt><dd>{deadline(listing.pickup_deadline)}</dd></dl>
+    <Dietary listing={listing}/>
+    <div className={styles.cardFooter}><Link href={own ? `/manage/${listing.id}` : `/listings/${listing.id}`}>{own ? 'Manage listing' : 'View food →'}</Link><a href={directionsUrl(listing.location)} target="_blank" rel="noreferrer">Open in Google Maps</a>{listing.distance_m !== undefined && <small>{formatDistance(listing.distance_m)}</small>}</div>
+  </article>;
+}

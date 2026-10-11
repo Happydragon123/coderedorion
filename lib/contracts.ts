@@ -37,6 +37,9 @@ export const createListingSchema = z.object(listingFields).strict();
 export const patchListingSchema = createListingSchema.partial().extend({ status: z.enum(['open', 'closed']).optional() }).strict().refine(v => Object.keys(v).length > 0, 'Provide at least one field');
 export const listingSchema = createListingSchema.extend({ id: idSchema, organizer_id: idSchema, status: z.enum(['open', 'closed']), created_at: timestampSchema, location: locationSchema, available_portions: z.number().int().nonnegative(), distance_m: z.number().nonnegative().optional(), sharer: sharingIdentitySchema.optional() }).strict();
 export const reservationSchema = z.object({ id: idSchema, listing_id: idSchema, student_id: idSchema, pickup_code: z.string().min(1).max(32), status: z.enum(['reserved', 'collected', 'cancelled', 'expired']), created_at: timestampSchema, collected_at: timestampSchema.nullable() }).strict();
+// Private context for the verified caller; never add this to public Listing DTOs.
+export const pickupContextResponseSchema = z.object({ is_owner: z.boolean(), reservation: reservationSchema.nullable() }).strict();
+export type PickupContext = z.infer<typeof pickupContextResponseSchema>;
 export const collectSchema = z.object({ pickup_code: z.string().trim().min(1).max(32) }).strict();
 const queryNumber = (min: number, max: number) => z.preprocess(v => typeof v === 'string' && v.trim() !== '' ? Number(v) : v, z.number().min(min).max(max));
 export const listingFiltersSchema = z.object({ location_id: idSchema.optional(), dietary_tag: dietaryTagSchema.optional(), origin_lat: queryNumber(-90,90).optional(), origin_lng: queryNumber(-180,180).optional(), max_distance_m: queryNumber(1,100000).optional(), pickup_before: timestampSchema.optional() }).strict().superRefine((v,ctx) => {

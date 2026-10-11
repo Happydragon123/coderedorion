@@ -22,8 +22,11 @@ try {
     create function storage.foldername(name text) returns text[] language sql immutable as
       $$ select string_to_array(name,'/') $$;
   `);
-  for (const file of ['supabase/migrations/202610100001_food.sql', 'supabase/migrations/20261011012419_location_google_maps_url.sql', 'supabase/migrations/20261011020000_sharing_identity.sql', 'scripts/sharing-identity.local.sql']) {
+  for (const file of ['supabase/migrations/202610100001_food.sql', 'supabase/migrations/20261011012419_location_google_maps_url.sql', 'supabase/migrations/20261011020000_sharing_identity.sql', 'supabase/migrations/20261011030000_no_self_reservations.sql', 'scripts/sharing-identity.local.sql', 'scripts/reservation-safety.local.sql']) {
     await db.exec(await readFile(file, 'utf8'));
   }
-  console.log('PASS: local PostgreSQL migration, signup metadata, listing attribution, own-profile edits, RLS, email privacy and RPC grants/bounds. All test records rolled back.');
+  console.log('PASS: local PostgreSQL migrations, sharing identities/profile RLS, self-reservation denial, private pickup context, cancellation/re-reserve, closed/expired posts and exactly-once collection. All test records rolled back.');
+} catch (error) {
+  console.error('Local SQL verification failed:', error.message, error.where || '');
+  process.exitCode = 1;
 } finally { await db.close(); }

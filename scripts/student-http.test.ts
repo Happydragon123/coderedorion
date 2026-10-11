@@ -47,16 +47,26 @@ test('student HTTP flow: cookie auth, filters, 409, private pickups, cancellatio
     }), c.listingResponseSchema, 201);
     listingId = listing.id;
     const detail = `/api/listings/${listingId}`;
+    const ownerContext = await checked(await organizer.send(detail + '/pickup-context'), c.pickupContextResponseSchema);
+    assert.equal(ownerContext.is_owner, true); assert.equal(ownerContext.reservation, null);
+    const emptyContext = await checked(await student.send(detail + '/pickup-context'), c.pickupContextResponseSchema);
+    assert.equal(emptyContext.is_owner, false); assert.equal(emptyContext.reservation, null);
+    const forbiddenSelf = await checked(await organizer.send(detail + '/reservations', 'POST'), c.errorEnvelopeSchema, 403);
+    assert.equal(forbiddenSelf.error.code, 'FORBIDDEN');
     const matches = await checked(await student.send(`/api/listings?location_id=${location.id}&dietary_tag=vegetarian&origin_lat=${location.latitude}&origin_lng=${location.longitude}&max_distance_m=1`), c.listingsResponseSchema);
     assert.ok(matches.listings.some(row => row.id === listingId && row.distance_m === 0));
     const excludes = await checked(await student.send('/api/listings?dietary_tag=vegan'), c.listingsResponseSchema);
     assert.ok(!excludes.listings.some(row => row.id === listingId), 'Unconfirmed dietary tags cannot match');
     const { reservation } = await checked(await student.send(detail + '/reservations', 'POST'), c.reservationResponseSchema, 201);
     assert.equal(reservation.student_id, student.user.id);
+    const reservedContext = await checked(await student.send(detail + '/pickup-context'), c.pickupContextResponseSchema);
+    assert.equal(reservedContext.reservation?.id, reservation.id);
+    assert.equal(reservedContext.reservation?.pickup_code, reservation.pickup_code);
     for (const client of [student, organizer]) {
-      const conflict = await checked(await client.send(detail + '/reservations', 'POST'), c.errorEnvelopeSchema, 409);
-      assert.equal(conflict.error.code, 'CONFLICT');
+      const conflict = await checked(await client.send(detail + '/reservations', 'POST'), c.errorEnvelopeSchema, client === organizer ? 403 : 409);
+      assert.equal(conflict.error.code, client === organizer ? 'FORBIDDEN' : 'CONFLICT');
     }
+    assert.equal((await checked(await organizer.send(detail + '/pickup-context'), c.pickupContextResponseSchema)).reservation, null, 'Owner context must not reveal students\' codes');
     const soldOut = await checked(await student.send(detail), c.listingResponseSchema);
     assert.equal(soldOut.listing.available_portions, 0);
     assert.ok(!('pickup_code' in soldOut.listing));
@@ -68,12 +78,15 @@ test('student HTTP flow: cookie auth, filters, 409, private pickups, cancellatio
     await checked(await organizer.send(`/api/reservations/${reservation.id}/cancel`, 'POST'), c.errorEnvelopeSchema, 403);
     const cancelled = await checked(await student.send(`/api/reservations/${reservation.id}/cancel`, 'POST'), c.reservationResponseSchema);
     assert.equal(cancelled.reservation.status, 'cancelled');
+    assert.equal((await checked(await student.send(detail + '/pickup-context'), c.pickupContextResponseSchema)).reservation?.status, 'cancelled');
     assert.equal((await checked(await student.send(detail), c.listingResponseSchema)).listing.available_portions, 1);
     const again = await checked(await student.send(detail + '/reservations', 'POST'), c.reservationResponseSchema, 201);
     assert.notEqual(again.reservation.id, reservation.id);
+    assert.equal((await checked(await student.send(detail + '/pickup-context'), c.pickupContextResponseSchema)).reservation?.id, again.reservation.id);
     await checked(await student.send(detail + '/collect', 'POST', { pickup_code: again.reservation.pickup_code }), c.errorEnvelopeSchema, 403);
     const collected = await checked(await organizer.send(detail + '/collect', 'POST', { pickup_code: again.reservation.pickup_code }), c.reservationResponseSchema);
     assert.equal(collected.reservation.status, 'collected');
+    assert.equal((await checked(await student.send(detail + '/pickup-context'), c.pickupContextResponseSchema)).reservation?.status, 'collected');
     const retry = await checked(await organizer.send(detail + '/collect', 'POST', { pickup_code: again.reservation.pickup_code }), c.reservationResponseSchema);
     assert.equal(retry.reservation.collected_at, collected.reservation.collected_at);
     const after = await checked(await organizer.send('/api/impact'), c.impactSchema);

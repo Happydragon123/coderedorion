@@ -4,6 +4,8 @@ Reviewed October 10, 2026. Work top to bottom within each priority group. Unreso
 
 The home-page map (Original #6, formerly item 14) is implemented locally and removed from the active issues: visible red pickup pins for guests, live availability for signed-in users, grouped food previews, directions, and an attributed campus basemap without POI icons or road shields. Hosted deployment and browser checks for desktop/mobile, keyboard/touch interaction and recovery states remain in the completion gate below. Other issue numbers are preserved for existing references.
 
+Issues **#3 (own-food reservations)** and **#4 (existing pickup on reopen)** are implemented locally and removed from the active implementation backlog. Own posts have a Manage action; owner API claims return 403; detail pages load the caller's pickup before allowing a new claim and respect reserved/collected/cancelled/expired states. Apply the new no-self-reservations migration to the intended Supabase database to close direct RPC attempts too; it has not been applied to the hosted project. Local SQL/UI tests passed; hosted deployment and browser checks remain in the completion gate. See [reservation safety setup and verification](reservation-safety.md).
+
 **P1:** complete account access and make food handoffs dependable. **P2:** complete everyday management and interaction details. **P3:** expand discovery and finish presentation. No new critical security failure was established by this review.
 
 ## P1 — Do first
@@ -23,22 +25,6 @@ Evidence: `lib/server/auth.ts`, `lib/contracts.ts`, both protected route-group l
 **Done when:** a new user can create an account and reach the protected app using real Supabase auth, including the deployed confirmation callback.
 
 Evidence: `components/shared/auth-form.tsx`, `app/sign-in/page.tsx`, `app/auth/callback/route.ts`, profile signup trigger in `supabase/migrations/202610100001_food.sql`.
-
-### 3. Separate your own food from claimable food — Original #3, expanded
-
-The discovery query includes the current user's listings. More importantly, the reservation database function does not reject the listing owner, so hiding a card alone would leave self-reservation possible through a direct request.
-
-**Done when:** own listings are hidden from claimable results or clearly labeled with a Manage action; listing details prevent self-reservation; the server/database enforces the same rule. Test both the UI and a direct request. This also prevents self-collection from inflating rescue totals.
-
-Evidence: `lib/data/food.ts`, `components/student/listing-detail.tsx`, `reserve_food` in `supabase/migrations/202610100001_food.sql`. Backend enforcement requires contract/lifecycle coordination.
-
-### 4. Recognize existing pickups when opening a listing — Added
-
-The detail page only remembers reservations made during that component's current session. Revisiting a listing with an existing reservation still offers “Reserve one portion”; the database then rejects the duplicate.
-
-**Done when:** an existing pickup displays its status and a My pickups link immediately; cancelled/expired/collected states follow the actual lifecycle rules. Keep server conflict handling for stale inventory and concurrent requests.
-
-Evidence: `components/student/listing-detail.tsx`, `app/api/me/reservations/route.ts`.
 
 ### 5. Add password recovery — Added
 

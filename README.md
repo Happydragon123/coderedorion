@@ -75,6 +75,8 @@ AI routes declare a 60-second function maximum around the 45-second Gemini timeo
 
 ## Team integration
 
+Own posts now show a Manage action, and listing details restore existing pickup status before allowing a new claim. The reservation API blocks owner claims; apply the additive no-self-reservations migration to block direct Supabase RPC attempts too. No hosted migration was applied for this change. See [reservation safety setup and testing](docs/reservation-safety.md).
+
 Read [contracts and ownership](docs/contracts.md) before coding. The table/DTO/transaction review is complete; coordinate subsequent contract changes with Agent 0 and Agent 1. Use isolated branches/worktrees and focused commits. Do not change dependencies, contracts or global styles without coordination. `lib/api-client.ts` is the frontend adapter for every planned endpoint; fixtures are explicit synthetic development data and are never served by production. UI fixtures have test coordinates, not verified campus locations.
 
 Auth/session pattern follows [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client) and [Next.js Proxy](https://nextjs.org/docs/app/getting-started/proxy). No AI SDK added yet; owners can use server fetch or request a justified dependency.
