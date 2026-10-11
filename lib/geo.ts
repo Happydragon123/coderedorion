@@ -1,4 +1,4 @@
-import { originSchema } from './contracts';
+import { googleMapsUrlSchema, originSchema } from './contracts';
 type Point = { latitude: number; longitude: number };
 export function distanceMeters(a: Point, b: Point) {
   originSchema.parse({ latitude: a.latitude, longitude: a.longitude }); originSchema.parse({ latitude: b.latitude, longitude: b.longitude });
@@ -8,7 +8,9 @@ export function distanceMeters(a: Point, b: Point) {
   return 6371000 * 2 * Math.asin(Math.sqrt(Math.min(1, h)));
 }
 export function formatDistance(meters: number) { return `${(meters / 1609.344).toFixed(1)} mi straight-line`; }
-export function directionsUrl(point: Point) {
+export function directionsUrl(point: Point & { google_maps_url?: string | null }) {
+  const configured = googleMapsUrlSchema.safeParse(point.google_maps_url);
+  if (configured.success) return configured.data;
   originSchema.parse({ latitude: point.latitude, longitude: point.longitude });
   return `https://www.google.com/maps/dir/?api=1&destination=${point.latitude},${point.longitude}`;
 }

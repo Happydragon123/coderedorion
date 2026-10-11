@@ -1,5 +1,9 @@
 # Agent 2 student interface handoff
 
+## Manual Google Maps links — 2026-10-10
+
+Food cards, listing details and active private pickups show “Open in Google Maps.” The directions helper prefers a configured landmark `google_maps_url` validated with Agent 0's shared schema, then falls back to validated latitude/longitude directions when absent or invalid. Links open only on user action; no tiles, embedded maps, URL fetching, dependencies or inventory mutations were added. Short/full configured links and unsafe-link coordinate fallback are covered by geo tests. Lint, typecheck, 25 tests (three live suites skipped), and production build passed. Landmark URL entry and migration remain administrator/Agent 1 owned.
+
 ## Student visual refresh — 2026-10-10
 
 Search is the primary feed action, with optional exact filters inside an accessible collapsed disclosure. Map controls appear only when an authorized tile URL and attribution are configured; food cards and directions remain the default. Warm ivory cards, sage search panel, status chips and restrained borders improve hierarchy across food details, pickups and impact without changing endpoint/auth behavior, dietary uncertainty, private codes or Chicago deadline controls. Lint, typecheck, 22 tests (three live suites skipped), and production build passed. Hosted visual/browser acceptance remains integration-owned.
